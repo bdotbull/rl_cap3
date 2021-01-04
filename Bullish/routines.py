@@ -1,9 +1,12 @@
 from utils import *
 
-#This file holds all of the mechanical tasks, called "routines", that the bot can do
+# This file holds all of the mechanical tasks, called "routines", that the bot can do
+# All routines have a run function which accept `self` and `agent`,
+# and all will modify the agent's controller in some way
+
 
 class atba():
-    #An example routine that just drives towards the ball at max speed
+    # An example routine that just drives towards the ball at max speed
     def run(self, agent):
         relative_target = agent.ball.location - agent.me.location
         local_target = agent.me.local(relative_target)
@@ -11,55 +14,70 @@ class atba():
         defaultThrottle(agent, 2300)
 
 class aerial_shot():
-    #Very similar to jump_shot(), but instead designed to hit targets above 300uu
-    #***This routine is a WIP*** It does not currently hit the ball very hard, nor does it like to be accurate above 600uu or so
+    # Very similar to jump_shot(), but instead designed to hit targets above 300uu
+    # ***This routine is a WIP*** It does not currently hit the ball very hard, 
+    # nor does it like to be accurate above 600uu or so
     def __init__(self, ball_location, intercept_time, shot_vector, ratio):
         self.ball_location = ball_location
         self.intercept_time = intercept_time
-        #The direction we intend to hit the ball in
+        # The direction we intend to hit the ball in
         self.shot_vector = shot_vector
         #The point we hit the ball at
         self.intercept = self.ball_location - (self.shot_vector * 110)
-        #dictates when (how late) we jump, much later than in jump_shot because we can take advantage of a double jump
+        # Dictates when (how late) we jump, much later than in jump_shot 
+        # because we can take advantage of a double jump
         self.jump_threshold = 600
-        #what time we began our jump at
+        # What time we began our jump at
         self.jump_time = 0
-        #If we need a second jump we have to let go of the jump button for 3 frames, this counts how many frames we have let go for
+        # If we need a second jump, we must release the jump button for 3 frames,
+        #  this counts how many frames we have let go
         self.counter = 0
     def run(self,agent):
         raw_time_remaining = self.intercept_time - agent.time
-        #Capping raw_time_remaining above 0 to prevent division problems
+        # Capping raw_time_remaining above 0 to prevent division problems
         time_remaining = cap(raw_time_remaining,0.01,10.0)
 
         car_to_ball = self.ball_location - agent.me.location
-        #whether we are to the left or right of the shot vector
+        # Whether we are to the left or right of the shot vector
         side_of_shot = sign(self.shot_vector.cross((0,0,1)).dot(car_to_ball))
 
         car_to_intercept = self.intercept - agent.me.location
-        car_to_intercept_perp = car_to_intercept.cross((0,0,side_of_shot)) #perpendicular
+        # Perpendicular
+        car_to_intercept_perp = car_to_intercept.cross((0,0,side_of_shot)) 
         flat_distance_remaining = car_to_intercept.flatten().magnitude()
 
         speed_required = flat_distance_remaining / time_remaining
-        #When still on the ground we pretend gravity doesn't exist, for better or worse
-        acceleration_required = backsolve(self.intercept,agent.me,time_remaining, 325)
+        # When grounded, we pretend gravity doesn't exist, for better or worse
+        acceleration_required = backsolve(
+                self.intercept,agent.me,time_remaining, 325)
         local_acceleration_required = agent.me.local(acceleration_required)
 
-        #The adjustment causes the car to circle around the dodge point in an effort to line up with the shot vector
-        #The adjustment slowly decreases to 0 as the bot nears the time to jump
-        adjustment = car_to_intercept.angle(self.shot_vector) * flat_distance_remaining / 1.57 #size of adjustment
-        adjustment *= (cap(self.jump_threshold-(acceleration_required[2]),0.0,self.jump_threshold) / self.jump_threshold) #factoring in how close to jump we are
-        #we don't adjust the final target if we are already jumping
-        final_target = self.intercept + ((car_to_intercept_perp.normalize() * adjustment) if self.jump_time == 0 else 0)
+        # The adjustment causes the car to circle around the dodge point
+        # in an effort to line up with the shot vector
+        # The adjustment slowly decreases to 0 as the bot nears the time to jump
+        adjustment = (car_to_intercept.angle(self.shot_vector) 
+                * flat_distance_remaining / 1.57) # size of adjustment
+        # Factoring in how close to jump we are
+        adjustment *= (cap(self.jump_threshold-(acceleration_required[2]),
+                0.0,self.jump_threshold) / self.jump_threshold)
+        # We don't adjust the final target if we are already jumping
+        final_target = self.intercept + ((car_to_intercept_perp.normalize() 
+                * adjustment) if self.jump_time == 0 else 0)
 
-        #Some extra adjustment to the final target to ensure it's inside the field and we don't try to dirve through any goalposts to reach it
-        if abs(agent.me.location[1]) > 5150: final_target[0] = cap(final_target[0],-750,750)
+        # Some extra adjustment to the final target to ensure it's inside 
+        # the field and we don't try to drive through any goalposts to reach it
+        if abs(agent.me.location[1]) > 5150:
+            final_target[0] = cap(final_target[0],-750,750)
         
         local_final_target = agent.me.local(final_target - agent.me.location)
 
-        #drawing debug lines to show the dodge point and final target (which differs due to the adjustment)
+        # Drawing debug lines to show the dodge point and final target
+        # (which differs due to the adjustment)
         agent.line(agent.me.location,self.intercept)
-        agent.line(self.intercept-Vector3(0,0,100), self.intercept+Vector3(0,0,100),[255,0,0])
-        agent.line(final_target-Vector3(0,0,100),final_target+Vector3(0,0,100),[0,255,0])
+        agent.line(self.intercept-Vector3(0,0,100), 
+                self.intercept+Vector3(0,0,100),[255,0,0])
+        agent.line(final_target-Vector3(0,0,100),
+                final_target+Vector3(0,0,100),[0,255,0])
 
         angles = defaultPD(agent,local_final_target)
         
@@ -76,14 +94,17 @@ class aerial_shot():
         else:
             time_since_jump = agent.time - self.jump_time
 
-            #While airborne we boost if we're within 30 degrees of our local acceleration requirement
-            if agent.me.airborne and local_acceleration_required.magnitude() * time_remaining > 90:
+            # While airborne we boost if we're within 30 degrees 
+            # of our local acceleration requirement
+            if agent.me.airborne and (local_acceleration_required.magnitude()
+                * time_remaining) > 90:
                     angles = defaultPD(agent, local_acceleration_required)
                     if abs(angles[0]) + abs(angles[1]) < 0.45:
                         agent.controller.boost = True
             else:
                 final_target -= Vector3(0, 0, 45)
-                local_final_target = agent.me.local(final_target - agent.me.location)
+                local_final_target = agent.me.local(final_target
+                        - agent.me.location)
                 angles = defaultPD(agent, local_final_target)
 
             if self.counter == 0 and (time_since_jump <= 0.2 and local_acceleration_required[2] > 0):
