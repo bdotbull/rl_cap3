@@ -19,39 +19,48 @@ EMPTY_FIELD = [
 field = EMPTY_FIELD    # Start with a clean board
 field_width = 3   # Horizontal playspace  (used for random positions on reset)
 field_height = 3  # Vertical playspace    (used for random positions on reset)
+ball = '@'        # Character to represent the ball
+player = 'P'      # Character to represent the player
+play_game = True  # We want to play!
 
-ballX = 1
-ballY = 1
-ball = '@'
 
-playerX = 2
-playerY = 2
-player = 'P'
+# Classes
+class Player:
+    def __init__(self, x, y, char):
+        self.x = x
+        self.y = y
+        self.char = char
 
-play_game = True
+class Ball:
+    def __init__(self, x, y, char):
+        self.x = x
+        self.y = y
+        self.char = char
+
 
 # Functions
-def render_state():
+def render_state(field, ball, player):
     """Get ball and player location, add chars to field, print the field"""
-    field[ballY] = insert_char(field[ballY], ball, ballX)
-    field[playerY] = insert_char(field[playerY], player, playerX)
+    field = EMPTY_FIELD   # start with a new field every time to avoid ghosting
+    field[ball.x] = insert_char(field[ball.y], ball.char, ball.x)
+    field[player.y] = insert_char(field[player.y], player.char, player.x)
     
     for row in field:
         print(row)
 
-def player_turn():
+def player_turn(ball, player):
     """Get player choice, move pieces if valid"""
     while True:
         try:
             player_choice = get_player_choice()
-            if check_valid_player_move(player_choice) == False:
+            if check_valid_player_move(player_choice, player) == False:
                 raise ValueError
         except ValueError:
             print("Move cannot be completed. Try again.")
         else:
             break
     
-    move_pieces(player_choice)
+    move_pieces(player_choice, ball, player)
 
 def get_player_choice():
     """Ask player where they want to move (W, A, S, D)"""
@@ -72,9 +81,9 @@ def get_player_choice():
 
     return player_choice.lower()
 
-def calculate_new_player_position(player_choice):
-    player_newY = playerY    # start with current position
-    player_newX = playerX    # start with current position
+def calculate_new_player_position(player_choice, player):
+    player_newY = player.y    # start with current position
+    player_newX = player.x    # start with current position
     
     # Calculate new position
     if player_choice == 'w':
@@ -88,14 +97,14 @@ def calculate_new_player_position(player_choice):
 
     return player_newY, player_newX
 
-def calculate_new_ball_position(player_choice):
+def calculate_new_ball_position(player_choice, ball):
     """ Calculatees new ball position.
         If the ball is against a wall and is hit towards the same wall,
         the ball and player swap positions.  This is as if you were to slam
         the ball into the wall and it bounces behind you.
     """
-    ball_newY = ballY    # start with current position
-    ball_newX = ballX    # start with current position
+    ball_newY = ball.y    # start with current position
+    ball_newX = ball.x    # start with current position
 
     # Calculate new position
     if player_choice == 'w':
@@ -119,7 +128,7 @@ def calculate_new_ball_position(player_choice):
 
     return ball_newY, ball_newX
 
-def check_valid_player_move(player_choice):
+def check_valid_player_move(player_choice, player):
     """Check to make sure:
         - player moving in bounds (not through walls or into goal)
         Calculates next move based on `player_choice` 
@@ -128,7 +137,7 @@ def check_valid_player_move(player_choice):
     is_valid = False   # start with assumption the move is not valid
     
     # calculate next move
-    attemptedY, attemptedX = calculate_new_player_position(player_choice)
+    attemptedY, attemptedX = calculate_new_player_position(player_choice, player)
 
     # check to see if the move is valid (within playspace)
     if (attemptedY >=1) and (attemptedY <= field_height):
@@ -144,37 +153,39 @@ def insert_char(string, char, position):
     string_[position] = char
     return ''.join(string_)
 
-def move_pieces(player_choice):
+def move_pieces(player_choice, ball, player):
     """Calculates new positions for ball and player. Then moves the pieces
         by changing the values of `playerY`, `playerX`, `ballY`, and `ballX`.
     """
-    playerY, playerX = calculate_new_player_position(player_choice)
-    ballY, ballX = calculate_new_ball_position(player_choice)
+    player.y, player.x = calculate_new_player_position(player_choice, player)
+    
+    if (player.y == ball.y) and (player.x == ball.x):
+        ball.y, ball.x = calculate_new_ball_position(player_choice, ball)
 
-def scored_check(should_reset):
+def scored_check(should_reset, ball):
     """If the ball is in the middle of the upper row and pushed north, we win!
         Will reset board if user chooses to play again.
     """
     # Score in opponents goal for large reward
-    if ballY == 0 and ballX == 2:
+    if ball.y == 0 and ball.x == 2:
         print("Player has scored! You win!")
         should_reset = input("Play again? 0=No, 1=Yes")
     
     # Score in own goal for large (negative) reward
-    if ballY == 4 and ballX == 2:
+    if ball.y == 4 and ball.x == 2:
         print("Own Goal.  You Lose.")
         should_reset = input("Play again? 0=No, 1=Yes")
     
     return should_reset
 
-def reset_game():
+def reset_game(ball, player):
     """Resets the board, chooses a random location for the ball and player to spawn.
     """
-    field = EMPTY_FIELD
-    ballY = random.randint(1, field_height)
-    ballX = random.randint(1, field_width)
-    playerY = random.randint(1, field_height)
-    playerX = random.randint(1, field_width)
+    #field = EMPTY_FIELD
+    ball.y = random.randint(1, field_height)
+    ball.x = random.randint(1, field_width)
+    player.y = random.randint(1, field_height)
+    player.x = random.randint(1, field_width)
 
 def game_over():
     print('Game Over.  Thank you for your time!')
@@ -189,18 +200,22 @@ if __name__ == '__main__':
     compute where to move the player and the ball
     change player and ball locations in memory
     """
-    reset_game()  # start in a random state
-    should_reset = 42  # passes through until modified by scored_check()
+    field = EMPTY_FIELD
+    ball = Ball(0, 0, '@')      # coordinates are randomized on reset
+    player = Player(0, 0, 'P')  # coordinates are randomized on reset
+    reset_game(ball, player)                # start in a random state
+    should_reset = 42           # passes through until modified by scored_check()
 
     while play_game:
-        render_state()
+        render_state(field, ball, player)
         
         # If we scored, we need to either reset or end
-        should_reset = scored_check(should_reset)
+        should_reset = scored_check(should_reset, ball)
         if should_reset == 1:
-            reset_game()
+            field = EMPTY_FIELD
+            reset_game(ball, player)
         elif should_reset == 0:
             game_over()
             break
 
-        player_turn()
+        player_turn(ball, player)
