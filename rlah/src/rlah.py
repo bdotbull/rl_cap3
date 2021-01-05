@@ -16,7 +16,7 @@ EMPTY_FIELD = [
 ]
 
 # Variables
-FIELD = EMPTY_FIELD    # Start with a clean board
+field = EMPTY_FIELD    # Start with a clean board
 field_width = 3   # Horizontal playspace  (used for random positions on reset)
 field_height = 3  # Vertical playspace    (used for random positions on reset)
 
@@ -33,10 +33,10 @@ play_game = True
 # Functions
 def render_state():
     """Get ball and player location, add chars to field, print the field"""
-    FIELD[ballY] = insert_char(FIELD[ballY], ball, ballX)
-    FIELD[playerY] = insert_char(FIELD[playerY], player, playerX)
+    field[ballY] = insert_char(field[ballY], ball, ballX)
+    field[playerY] = insert_char(field[playerY], player, playerX)
     
-    for row in FIELD:
+    for row in field:
         print(row)
 
 def player_turn():
@@ -49,8 +49,9 @@ def player_turn():
         except ValueError:
             print("Move cannot be completed. Try again.")
         else:
-            move_pieces(player_choice)
             break
+    
+    move_pieces(player_choice)
 
 def get_player_choice():
     """Ask player where they want to move (W, A, S, D)"""
@@ -195,7 +196,7 @@ if __name__ == '__main__':
         render_state()
         
         # If we scored, we need to either reset or end
-        should_reset = scored_check()
+        should_reset = scored_check(should_reset)
         if should_reset == 1:
             reset_game()
         elif should_reset == 0:
