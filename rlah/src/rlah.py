@@ -30,6 +30,8 @@ class Player:
         self.x = x
         self.y = y
         self.char = char
+        self.scored = False
+        self.wins = 0
 
 class Ball:
     def __init__(self, x, y, char):
@@ -117,17 +119,22 @@ def calculate_new_ball_position(player_choice, ball):
     elif player_choice == 'd':
         ball_newX += 1
 
-    # check for "bounce" off the wall
-    if ball_newY == 0:                # bounce off top wall
-        ball_newY = 2
-    if ball_newY > field_height:      # bounce off bottom wall
-        ball_newY = field_height - 1
-    if ball_newX == 0:                # bounce off left wall
-        ball_newX = 2
-    if ball_newX > field_width:       # bounce off right wall
-        ball_newX = field_width - 1
+    # check to see if ball is scored
+    if ((ball_newY == 0 and ball_newX == 2)        # proper goal
+        or (ball_newY == 4 and ball_newX == 2)):   # own goal
+        return ball_newY, ball_newX
+    else:
+        # check for "bounce" off the wall
+        if ball_newY == 0:                # bounce off top wall
+            ball_newY = 2
+        if ball_newY > field_height:      # bounce off bottom wall
+            ball_newY = field_height - 1
+        if ball_newX == 0:                # bounce off left wall
+            ball_newX = 2
+        if ball_newX > field_width:       # bounce off right wall
+            ball_newX = field_width - 1
 
-    return ball_newY, ball_newX
+        return ball_newY, ball_newX
 
 def check_valid_player_move(player_choice, player):
     """Check to make sure:
@@ -164,19 +171,19 @@ def move_pieces(player_choice, ball, player):
     if (player.y == ball.y) and (player.x == ball.x):
         ball.y, ball.x = calculate_new_ball_position(player_choice, ball)
 
-def scored_check(should_reset, ball):
+def scored_check(should_reset, ball, player):
     """If the ball is in the middle of the upper row and pushed north, we win!
         Will reset board if user chooses to play again.
     """
     # Score in opponents goal for large reward
     if ball.y == 0 and ball.x == 2:
         print("Player has scored! You win!")
-        should_reset = input("Play again? 0=No, 1=Yes")
+        should_reset = input("Play again? 0=No, 1=Yes ")
     
     # Score in own goal for large (negative) reward
     if ball.y == 4 and ball.x == 2:
         print("Own Goal.  You Lose.")
-        should_reset = input("Play again? 0=No, 1=Yes")
+        should_reset = input("Play again? 0=No, 1=Yes ")
     
     return should_reset
 
@@ -191,8 +198,9 @@ def reset_game(ball, player):
     player.y = random.randint(1, field_height)
     player.x = random.randint(1, field_width)
 
-def game_over():
+def game_over(player):
     print('Game Over.  Thank you for your time!')
+    print(f'Win count: {player.wins}')
 
 if __name__ == '__main__':
     print('Welcome to RLAH')
@@ -218,8 +226,11 @@ if __name__ == '__main__':
         if should_reset == 1:
             field = EMPTY_FIELD.copy()
             reset_game(ball, player)
+            player.wins += 1
+            should_reset = 42
+            render_state(EMPTY_FIELD.copy(), ball, player)
         elif should_reset == 0:
-            game_over()
+            game_over(player)
             break
 
         player_turn(ball, player)
