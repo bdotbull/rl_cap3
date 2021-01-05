@@ -56,7 +56,7 @@ def player_turn():
 
 def get_player_choice():
     """Ask player where they want to move (W, A, S, D)"""
-    possible_moves = ['w', 'a', 's', 'd']
+    possible_input = ['w', 'a', 's', 'd']
     
     # attempts to get player input, loops until valid answer is entered.
     while True:
@@ -66,7 +66,7 @@ def get_player_choice():
     
         try:
             player_choice = str(input("   Where will you move?   "))
-            if player_choice.lower() in possible_moves:
+            if player_choice.lower() in possible_input:
                 break
         except:
             print('Character entered is not in valid moveset.')
@@ -74,8 +74,13 @@ def get_player_choice():
     return player_choice
 
 def check_valid_move(player_choice):
-    """TODO: Implement truth logic"""
+    """Check to make sure:
+        - player moving in bounds
+        - ball moving in bounds
+    """
     is_valid = False
+
+    #TODO: Implement truth logic.
 
     return is_valid
 
@@ -144,3 +149,5 @@ if __name__ == '__main__':
         elif should_reset == 0:
             game_over()
             break
+
+        player_turn()
