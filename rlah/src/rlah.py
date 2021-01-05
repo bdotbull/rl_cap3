@@ -31,8 +31,7 @@ player = 'X'
 play_game = True
 
 # Functions
-
-def render():
+def render_state():
     """Get ball and player location, add chars to field, print the field"""
     FIELD[ballY] = insert_char(FIELD[ballY], ball, ballX)
     FIELD[playerY] = insert_char(FIELD[playerY], player, playerX)
@@ -41,7 +40,23 @@ def render():
         print(row)
 
 def player_turn():
-    pass
+    """Ask player where they want to move (W, A, S, D)"""
+    possible_moves = ['w', 'a', 's', 'd']
+    
+    # attempts to get player input, loops until valid answer is entered.
+    while True:
+        print("~~~~~~~~~~~W=Up~~~~~~~~~~~")
+        print("A=Left    S=Down    D=Right")
+        print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
+    
+        try:
+            player_choice = str(input("   Where will you move?   "))
+            if player_choice.lower() in possible_moves:
+                break
+        except:
+            print('Character entered is not in valid moveset.')
+
+    return player_choice
 
 def insert_char(string, char, position):
     """Inserts a char into string.  Does not change string length.
@@ -61,16 +76,16 @@ def scored_check():
     '''If the ball is in the middle of the upper row and pushed north, we win!
         Will reset board if user chooses to play again.
     '''
-    should_reset = 0
-
+    # Score in opponents goal for large reward
     if ballY == 0 and ballX == 2:
         print("Player has scored! You win!")
         should_reset = input("Play again? 0=No, 1=Yes")
     
+    # Score in own goal for large (negative) reward
     if ballY == 4 and ballX == 2:
         print("Own Goal.  You Lose.")
         should_reset = input("Play again? 0=No, 1=Yes")
-
+    
     return should_reset
 
 def reset_game():
@@ -82,6 +97,9 @@ def reset_game():
     playerY = random.randint(1, field_height)
     playerX = random.randint(1, field_width)
 
+def game_over():
+    print('Game Over.  Thank you for your time!')
+    play_game
 
 if __name__ == '__main__':
     print('Welcome to RLAH')
@@ -93,3 +111,16 @@ if __name__ == '__main__':
     compute where to move the player and the ball
     change player and ball locations in memory
     """
+    reset_game()  # start in a random state
+    should_reset = 0
+
+    while play_game:
+        render_state()
+        should_reset = scored_check()
+        # Reset or Game over, based on scored_check
+        if should_reset == 1:
+            reset_game()
+        elif should_reset == 0:
+            game_over()
+            break
+
