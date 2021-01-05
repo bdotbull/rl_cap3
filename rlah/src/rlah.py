@@ -40,9 +40,10 @@ class Ball:
 
 # Functions
 def render_state(field, ball, player):
-    """Get ball and player location, add chars to field, print the field"""
-    field = EMPTY_FIELD   # start with a new field every time to avoid ghosting
-    field[ball.x] = insert_char(field[ball.y], ball.char, ball.x)
+    """Get ball and player location, add chars to field, print the field.
+        Always uses GLOBAL `EMPTY_FIELD` to avoid ghosting
+    """
+    field[ball.y] = insert_char(field[ball.y], ball.char, ball.x)
     field[player.y] = insert_char(field[player.y], player.char, player.x)
     
     for row in field:
@@ -87,9 +88,9 @@ def calculate_new_player_position(player_choice, player):
     
     # Calculate new position
     if player_choice == 'w':
-        player_newY += 1
-    elif player_choice == 's':
         player_newY -= 1
+    elif player_choice == 's':
+        player_newY += 1
     elif player_choice == 'a':
         player_newX -= 1
     elif player_choice == 'd':
@@ -108,9 +109,9 @@ def calculate_new_ball_position(player_choice, ball):
 
     # Calculate new position
     if player_choice == 'w':
-        ball_newY += 1
-    elif player_choice == 's':
         ball_newY -= 1
+    elif player_choice == 's':
+        ball_newY += 1
     elif player_choice == 'a':
         ball_newX -= 1
     elif player_choice == 'd':
@@ -118,13 +119,13 @@ def calculate_new_ball_position(player_choice, ball):
 
     # check for "bounce" off the wall
     if ball_newY == 0:                # bounce off top wall
-        ball_newY += 2
+        ball_newY = 2
     if ball_newY > field_height:      # bounce off bottom wall
-        ball_newY = field_width - 2
+        ball_newY = field_height - 1
     if ball_newX == 0:                # bounce off left wall
-        ball_newX += 2
+        ball_newX = 2
     if ball_newX > field_width:       # bounce off right wall
-        ball_newX = field_width - 2
+        ball_newX = field_width - 1
 
     return ball_newY, ball_newX
 
@@ -159,6 +160,7 @@ def move_pieces(player_choice, ball, player):
     """
     player.y, player.x = calculate_new_player_position(player_choice, player)
     
+    # Move ball if 'kicked'
     if (player.y == ball.y) and (player.x == ball.x):
         ball.y, ball.x = calculate_new_ball_position(player_choice, ball)
 
@@ -180,6 +182,8 @@ def scored_check(should_reset, ball):
 
 def reset_game(ball, player):
     """Resets the board, chooses a random location for the ball and player to spawn.
+    TODO: ensure entitites did not spawn on same tile 
+            (while x's and y's match:  reset())
     """
     #field = EMPTY_FIELD
     ball.y = random.randint(1, field_height)
@@ -200,19 +204,19 @@ if __name__ == '__main__':
     compute where to move the player and the ball
     change player and ball locations in memory
     """
-    field = EMPTY_FIELD
+    field = EMPTY_FIELD.copy()
     ball = Ball(0, 0, '@')      # coordinates are randomized on reset
     player = Player(0, 0, 'P')  # coordinates are randomized on reset
     reset_game(ball, player)                # start in a random state
     should_reset = 42           # passes through until modified by scored_check()
 
     while play_game:
-        render_state(field, ball, player)
+        render_state(EMPTY_FIELD.copy(), ball, player)
         
         # If we scored, we need to either reset or end
         should_reset = scored_check(should_reset, ball)
         if should_reset == 1:
-            field = EMPTY_FIELD
+            field = EMPTY_FIELD.copy()
             reset_game(ball, player)
         elif should_reset == 0:
             game_over()
