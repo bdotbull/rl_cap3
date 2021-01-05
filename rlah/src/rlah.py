@@ -5,7 +5,9 @@ Them: No, we have Rocket League at home.
 Rocket League at home:
 '''
 
-FIELD = [
+import random
+
+EMPTY_FIELD = [
     "+-G-+",
     "|   |",
     "|   |",
@@ -14,8 +16,9 @@ FIELD = [
 ]
 
 # Variables
-field_width = 3
-field_height = 3
+FIELD = EMPTY_FIELD    # Start with a clean board
+field_width = 3   # Horizontal playspace  (used for random positions on reset)
+field_height = 3  # Vertical playspace    (used for random positions on reset)
 
 ballX = 1
 ballY = 1
@@ -31,14 +34,13 @@ play_game = True
 
 def render():
     """Get ball and player location, add chars to field, print the field"""
-    insert_char(FIELD[ballY], ball, ballX)
-    insert_char(FIELD[playerY], player, playerX)
+    FIELD[ballY] = insert_char(FIELD[ballY], ball, ballX)
+    FIELD[playerY] = insert_char(FIELD[playerY], player, playerX)
     
     for row in FIELD:
         print(row)
 
 def player_turn():
-    
     pass
 
 def insert_char(string, char, position):
@@ -55,21 +57,38 @@ def move_pieces():
     '''
     pass
 
-def win():
+def scored_check():
     '''If the ball is in the middle of the upper row and pushed north, we win!
+        Will reset board if user chooses to play again.
     '''
-    pass
+    should_reset = 0
 
-def lose():
-    pass
+    if ballY == 0 and ballX == 2:
+        print("Player has scored! You win!")
+        should_reset = input("Play again? 0=No, 1=Yes")
+    
+    if ballY == 4 and ballX == 2:
+        print("Own Goal.  You Lose.")
+        should_reset = input("Play again? 0=No, 1=Yes")
+
+    return should_reset
+
+def reset_game():
+    """Resets the board, chooses a random location for the ball and player to spawn.
+    """
+    FIELD = EMPTY_FIELD
+    ballY = random.randint(1, field_height)
+    ballX = random.randint(1, field_width)
+    playerY = random.randint(1, field_height)
+    playerX = random.randint(1, field_width)
 
 
 if __name__ == '__main__':
-    print('RLAH main')
+    print('Welcome to RLAH')
     """
     Game Logic:
     get player and ball location, add to board, draw the field
-    check for win 
+    check if goal scored, reset if needed
     ask player where to move
     compute where to move the player and the ball
     change player and ball locations in memory
