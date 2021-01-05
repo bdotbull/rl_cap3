@@ -191,6 +191,7 @@ def reset_game(ball, player):
     """Resets the board, chooses a random location for the ball and player to spawn.
     TODO: ensure entitites did not spawn on same tile 
             (while x's and y's match:  reset())
+    TODO: Be able to play continuously 
     """
     #field = EMPTY_FIELD
     ball.y = random.randint(1, field_height)
@@ -222,7 +223,7 @@ if __name__ == '__main__':
         render_state(EMPTY_FIELD.copy(), ball, player)
         
         # If we scored, we need to either reset or end
-        should_reset = scored_check(should_reset, ball)
+        should_reset = scored_check(should_reset, ball, player)
         if should_reset == 1:
             field = EMPTY_FIELD.copy()
             reset_game(ball, player)
