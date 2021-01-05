@@ -40,6 +40,21 @@ def render_state():
         print(row)
 
 def player_turn():
+    """Get player choice, move pieces if valid
+    """
+    while True:
+        try:
+            player_choice = get_player_choice()
+            if check_valid_move(player_choice) == False:
+                raise ValueError
+        except ValueError:
+            print("Move cannot be completed. Try again.")
+        else:
+            move_pieces(player_choice)
+            break
+    
+
+def get_player_choice():
     """Ask player where they want to move (W, A, S, D)"""
     possible_moves = ['w', 'a', 's', 'd']
     
@@ -58,6 +73,12 @@ def player_turn():
 
     return player_choice
 
+def check_valid_move(player_choice):
+    """TODO: Implement truth logic"""
+    is_valid = False
+
+    return is_valid
+
 def insert_char(string, char, position):
     """Inserts a char into string.  Does not change string length.
     """
@@ -72,7 +93,7 @@ def move_pieces():
     '''
     pass
 
-def scored_check():
+def scored_check(should_reset):
     '''If the ball is in the middle of the upper row and pushed north, we win!
         Will reset board if user chooses to play again.
     '''
@@ -99,7 +120,6 @@ def reset_game():
 
 def game_over():
     print('Game Over.  Thank you for your time!')
-    play_game
 
 if __name__ == '__main__':
     print('Welcome to RLAH')
@@ -112,15 +132,15 @@ if __name__ == '__main__':
     change player and ball locations in memory
     """
     reset_game()  # start in a random state
-    should_reset = 0
+    should_reset = 42  # passes through until modified by scored_check()
 
     while play_game:
         render_state()
+        
+        # If we scored, we need to either reset or end
         should_reset = scored_check()
-        # Reset or Game over, based on scored_check
         if should_reset == 1:
             reset_game()
         elif should_reset == 0:
             game_over()
             break
-
