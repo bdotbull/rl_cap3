@@ -170,7 +170,7 @@ def scored_check(should_reset):
 def reset_game():
     """Resets the board, chooses a random location for the ball and player to spawn.
     """
-    FIELD = EMPTY_FIELD
+    field = EMPTY_FIELD
     ballY = random.randint(1, field_height)
     ballX = random.randint(1, field_width)
     playerY = random.randint(1, field_height)
