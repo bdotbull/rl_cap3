@@ -5,7 +5,7 @@ Them: No, we have Rocket League at home.
 Rocket League at home:
 '''
 
-MAP = [
+FIELD = [
     "+-G-+",
     "|   |",
     "|   |",
@@ -30,7 +30,11 @@ play_game = True
 # Functions
 
 def render():
-    for row in MAP:
+    """Get ball and player location, add chars to field, print the field"""
+    insert_char(FIELD[ballY], ball, ballX)
+    insert_char(FIELD[playerY], player, playerX)
+    
+    for row in FIELD:
         print(row)
 
 def player_turn():
@@ -45,11 +49,10 @@ def insert_char(string, char, position):
     return ''.join(string_)
 
 def move_pieces():
-    '''the ball is against a wall and is hit towards the same wall, 
-        the ball and player swap positions.  This is as if you slam 
-        the ball into the wall and it bounces behind you
+    '''If the ball is against a wall and is hit towards the same wall,
+        the ball and player swap positions.  This is as if you were to slam
+        the ball into the wall and it bounces behind you.
     '''
-    
     pass
 
 def win():
@@ -65,7 +68,7 @@ if __name__ == '__main__':
     print('RLAH main')
     """
     Game Logic:
-    get player and ball location, add to board, draw the board
+    get player and ball location, add to board, draw the field
     check for win 
     ask player where to move
     compute where to move the player and the ball
