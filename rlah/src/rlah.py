@@ -37,7 +37,7 @@ class Player:
         self.own_goals = 0
         self.total_reward_earned = 0
         self.playing = True
-        self.wants_reset = 3
+        self.play_again = 3
 
 class Ball:
     def __init__(self, char):
@@ -46,7 +46,7 @@ class Ball:
         self.char = char
         self.scored = False
         self.last_touched = ''
-        ball.play_again = 3
+        self.play_again = 3
 
 
 # Functions
@@ -187,26 +187,22 @@ def check_if_scored(ball, player):
     """
     # Score in opponents goal for large reward
     if ball.y == 0 and ball.x == 2:
-        #
-        #should_reset = int(input("Play again? 0=No, 1=Yes "))
         ball.scored = True
         player.scored = True
     
     # Score in own goal for large (negative) reward
     if ball.y == 4 and ball.x == 2:
-        #
-        #should_reset = int(input("Play again? 0=No, 1=Yes "))
         ball.scored = True
         player.scored = True
         player.scored_own_goal = True
 
-def player_scored(ball, player):
+def player_scored(player):
     """
     """
     # If the player has NOT scored an own goal, celebrate!
     if player.scored_own_goal == False:
         print("Player has scored! You win!")
-        player.win
+        player.wins += 1
     else:
         print("Own Goal.  You Lose.")
 
@@ -215,14 +211,15 @@ def player_scored(ball, player):
     # Ask Player if they would like to play again
     while True:
         try:
-            wants_reset = int(input("Play again? 0=No, 1=Yes "))
-            if wants_reset not in [0,1]:
+            play_again = int(input("Play again? 0=No, 1=Yes "))
+            if play_again not in [0,1]:
                 raise ValueError
         except:
             print("\nPlease enter 0 to end the game or")
             print("1 to play again.")
         else:
-            player.wants_reset = wants_reset
+            player.play_again = play_again
+            break
 
 def reset_game(ball, player):
     """Resets the board, chooses a random location for the ball and player to spawn.
@@ -257,21 +254,21 @@ if __name__ == '__main__':
     compute where to move the player and the ball
     change player and ball locations in memory
     """
-    ball = Ball(0, 0, '@')      # coordinates are randomized on reset
-    player = Player(0, 0, 'P')  # coordinates are randomized on reset
+    ball = Ball('@')      # create a ball, given a character representation
+    player = Player('P')  # create a player, given a character representation
     reset_game(ball, player)    # start in a random state
 
     while play_game:
         render_state(EMPTY_FIELD.copy(), ball, player)
         
         check_if_scored(ball, player)
-        # If a player scored, we need to assign points then reset or end
+        # If a player scored, we need to assign points
         if ball.scored:
             player_scored(player)
 
+        # The game ends when a player scores, so we need to reset or end
         if player.play_again == 1:
             reset_game(ball, player)
-            player.wins += 1
             player.play_again = 42
             render_state(EMPTY_FIELD.copy(), ball, player)
         elif player.play_again == 0:
