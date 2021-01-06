@@ -32,6 +32,7 @@ class Player:
         self.name = ''
         self.scored = False
         self.scored_own_goal = False
+        self.games_played = 0
         self.wins = 0
         self.own_goals = 0
         self.total_reward_earned = 0
@@ -45,6 +46,7 @@ class Ball:
         self.char = char
         self.scored = False
         self.last_touched = ''
+        ball.play_again = 3
 
 
 # Functions
@@ -185,22 +187,42 @@ def check_if_scored(ball, player):
     """
     # Score in opponents goal for large reward
     if ball.y == 0 and ball.x == 2:
-        #print("Player has scored! You win!")
+        #
         #should_reset = int(input("Play again? 0=No, 1=Yes "))
         ball.scored = True
         player.scored = True
     
     # Score in own goal for large (negative) reward
     if ball.y == 4 and ball.x == 2:
-        #print("Own Goal.  You Lose.")
+        #
         #should_reset = int(input("Play again? 0=No, 1=Yes "))
         ball.scored = True
         player.scored = True
         player.scored_own_goal = True
 
-def someone_scored(ball, player):
+def player_scored(ball, player):
+    """
+    """
+    # If the player has NOT scored an own goal, celebrate!
+    if player.scored_own_goal == False:
+        print("Player has scored! You win!")
+        player.win
+    else:
+        print("Own Goal.  You Lose.")
 
-    pass
+    player.games_played += 1
+
+    # Ask Player if they would like to play again
+    while True:
+        try:
+            wants_reset = int(input("Play again? 0=No, 1=Yes "))
+            if wants_reset not in [0,1]:
+                raise ValueError
+        except:
+            print("\nPlease enter 0 to end the game or")
+            print("1 to play again.")
+        else:
+            player.wants_reset = wants_reset
 
 def reset_game(ball, player):
     """Resets the board, chooses a random location for the ball and player to spawn.
@@ -235,27 +257,24 @@ if __name__ == '__main__':
     compute where to move the player and the ball
     change player and ball locations in memory
     """
-    #field = EMPTY_FIELD.copy()
     ball = Ball(0, 0, '@')      # coordinates are randomized on reset
     player = Player(0, 0, 'P')  # coordinates are randomized on reset
     reset_game(ball, player)    # start in a random state
-    play_again = 42           # passes through until modified by scored_check()
 
     while play_game:
         render_state(EMPTY_FIELD.copy(), ball, player)
         
         check_if_scored(ball, player)
-        # If we scored, we need to assign points then reset or end
+        # If a player scored, we need to assign points then reset or end
         if ball.scored:
-            someone_scored(player)
+            player_scored(player)
 
-        if play_again == 1:
-            field = EMPTY_FIELD.copy()
+        if player.play_again == 1:
             reset_game(ball, player)
             player.wins += 1
-            should_reset = 42
+            player.play_again = 42
             render_state(EMPTY_FIELD.copy(), ball, player)
-        elif play_again == 0:
+        elif player.play_again == 0:
             game_over(player)
             play_game = False
             break
