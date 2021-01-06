@@ -60,6 +60,21 @@ def render_state(field, ball, player):
     for row in field:
         print(row)
 
+def print_player_stats(player):
+    """Prints player stats that may be useful.
+            Games Played,
+            Wins,
+            Win %,
+            Own Goals.
+        Ideas to implement:
+            Total moves, avg moves per game, own goal %, 
+            total reward, avg reward per game
+    """
+    print(f"Games Played: {player.games_played}")
+    print(f"Wins: {player.wins}")
+    print(f"Win %: {player.wins / player.games_played}")
+    print(f"Own Goals: {player.own_goals}")
+
 def player_turn(ball, player):
     """Get player choice, move pieces if valid"""
     while True:
@@ -242,7 +257,8 @@ def reset_game(ball, player):
 
 def game_over(player):
     print('Game Over.  Thank you for your time!')
-    print(f'Win count: {player.wins}')
+    print('Here are some gameplay statistics:')
+    print_player_stats(player)
 
 if __name__ == '__main__':
     print('Welcome to RLAH')
