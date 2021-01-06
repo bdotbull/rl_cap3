@@ -6,6 +6,7 @@ Rocket League at home:
 '''
 
 import random
+import numpy as np
 #import bot
 
 EMPTY_FIELD = [
@@ -59,8 +60,12 @@ class Agent(Player):
         self.max_exploration_rate = 1
         self.min_exploration_rate = 0.01
         self.exploration_decay_rate = 0.01
-    
+        self.q_table = None
 
+class Env():
+    
+    def __init__(self):
+        pass
 
 # Functions
 def render_state(field, ball, player):
