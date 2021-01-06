@@ -24,18 +24,29 @@ play_game = True  # We want to play!
 
 # Classes
 class Player:
-    def __init__(self, x, y, char):
-        self.x = x
-        self.y = y
+    def __init__(self, char):
+        self.x = 0
+        self.y = 0
+        self.id = 0
         self.char = char
+        self.name = ''
         self.scored = False
+        self.scored_own_goal = False
+        self.games_played = 0
         self.wins = 0
+        self.own_goals = 0
+        self.total_reward_earned = 0
+        self.playing = True
+        self.play_again = 3
 
 class Ball:
-    def __init__(self, x, y, char):
-        self.x = x
-        self.y = y
+    def __init__(self, char):
+        self.x = 0
+        self.y = 0
         self.char = char
+        self.scored = False
+        self.last_touched = ''
+        self.play_again = 3
 
 
 # Functions
@@ -48,6 +59,21 @@ def render_state(field, ball, player):
     
     for row in field:
         print(row)
+
+def print_player_stats(player):
+    """Prints player stats that may be useful.
+            Games Played,
+            Wins,
+            Win %,
+            Own Goals.
+        Ideas to implement:
+            Total moves, avg moves per game, own goal %, 
+            total reward, avg reward per game
+    """
+    print(f"Games Played: {player.games_played}")
+    print(f"Wins: {player.wins}")
+    print(f"Win %: {player.wins / player.games_played}")
+    print(f"Own Goals: {player.own_goals}")
 
 def player_turn(ball, player):
     """Get player choice, move pieces if valid"""
@@ -168,67 +194,100 @@ def move_pieces(player_choice, ball, player):
     # Move ball if 'kicked'
     if (player.y == ball.y) and (player.x == ball.x):
         ball.y, ball.x = calculate_new_ball_position(player_choice, ball)
+        ball.last_touched = player.id
 
-def scored_check(should_reset, ball, player):
+def check_if_scored(ball, player):
     """If the ball is in the middle of the upper row and pushed north, we win!
         Will reset board if user chooses to play again.
     """
     # Score in opponents goal for large reward
     if ball.y == 0 and ball.x == 2:
-        print("Player has scored! You win!")
-        should_reset = int(input("Play again? 0=No, 1=Yes "))
+        ball.scored = True
+        player.scored = True
     
     # Score in own goal for large (negative) reward
     if ball.y == 4 and ball.x == 2:
+        ball.scored = True
+        player.scored = True
+        player.scored_own_goal = True
+
+def player_scored(player):
+    """
+    """
+    # If the player has NOT scored an own goal, celebrate!
+    if player.scored_own_goal == False:
+        print("Player has scored! You win!")
+        player.wins += 1
+    else:
         print("Own Goal.  You Lose.")
-        should_reset = int(input("Play again? 0=No, 1=Yes "))
-    
-    return should_reset
+
+    player.games_played += 1
+
+    # Ask Player if they would like to play again
+    while True:
+        try:
+            play_again = int(input("Play again? 0=No, 1=Yes "))
+            if play_again not in [0,1]:
+                raise ValueError
+        except:
+            print("\nPlease enter 0 to end the game or")
+            print("1 to play again.")
+        else:
+            player.play_again = play_again
+            break
 
 def reset_game(ball, player):
     """Resets the board, chooses a random location for the ball and player to spawn.
     TODO: ensure entitites did not spawn on same tile 
             (while x's and y's match:  reset())
-    TODO: Be able to play continuously 
     """
-    #field = EMPTY_FIELD
+    # Reset locations (like kickoff)
     ball.y = random.randint(1, field_height)
     ball.x = random.randint(1, field_width)
     player.y = random.randint(1, field_height)
     player.x = random.randint(1, field_width)
 
+    # Reset Player flags
+    player.scored = False
+    player.scored_own_goal = False
+
+    # Reset Ball flags
+    ball.scored = False
+    ball.last_touched = ''
+
 def game_over(player):
     print('Game Over.  Thank you for your time!')
-    print(f'Win count: {player.wins}')
+    print('Here are some gameplay statistics:')
+    print_player_stats(player)
 
 if __name__ == '__main__':
     print('Welcome to RLAH')
     """
     Game Logic:
     get player and ball location, add to board, draw the field
-    check if goal scored, reset if needed
+    check if goal scored, reset and assign points if needed
     ask player where to move
     compute where to move the player and the ball
     change player and ball locations in memory
     """
-    field = EMPTY_FIELD.copy()
-    ball = Ball(0, 0, '@')      # coordinates are randomized on reset
-    player = Player(0, 0, 'P')  # coordinates are randomized on reset
-    reset_game(ball, player)                # start in a random state
-    should_reset = 42           # passes through until modified by scored_check()
+    ball = Ball('@')      # create a ball, given a character representation
+    player = Player('P')  # create a player, given a character representation
+    reset_game(ball, player)    # start in a random state
 
     while play_game:
         render_state(EMPTY_FIELD.copy(), ball, player)
         
-        # If we scored, we need to either reset or end
-        should_reset = scored_check(should_reset, ball, player)
-        if should_reset == 1:
-            field = EMPTY_FIELD.copy()
+        check_if_scored(ball, player)
+        # If a player scored, we need to assign points
+        if ball.scored:
+            player_scored(player)
+
+        # The game ends when a player scores, so we need to reset or end
+        if player.play_again == 1:
             reset_game(ball, player)
-            player.wins += 1
-            should_reset = 42
+            player.play_again = 42
             render_state(EMPTY_FIELD.copy(), ball, player)
-        elif should_reset == 0:
+        elif player.play_again == 0:
             game_over(player)
             play_game = False
             break
