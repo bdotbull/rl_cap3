@@ -19,8 +19,6 @@ EMPTY_FIELD = [
 field = EMPTY_FIELD    # Start with a clean board
 field_width = 3   # Horizontal playspace  (used for random positions on reset)
 field_height = 3  # Vertical playspace    (used for random positions on reset)
-ball = '@'        # Character to represent the ball
-player = 'P'      # Character to represent the player
 play_game = True  # We want to play!
 
 
@@ -178,12 +176,12 @@ def scored_check(should_reset, ball, player):
     # Score in opponents goal for large reward
     if ball.y == 0 and ball.x == 2:
         print("Player has scored! You win!")
-        should_reset = input("Play again? 0=No, 1=Yes ")
+        should_reset = int(input("Play again? 0=No, 1=Yes "))
     
     # Score in own goal for large (negative) reward
     if ball.y == 4 and ball.x == 2:
         print("Own Goal.  You Lose.")
-        should_reset = input("Play again? 0=No, 1=Yes ")
+        should_reset = int(input("Play again? 0=No, 1=Yes "))
     
     return should_reset
 
@@ -232,6 +230,7 @@ if __name__ == '__main__':
             render_state(EMPTY_FIELD.copy(), ball, player)
         elif should_reset == 0:
             game_over(player)
+            play_game = False
             break
 
         player_turn(ball, player)
