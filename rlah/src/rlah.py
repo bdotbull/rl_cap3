@@ -6,6 +6,7 @@ Rocket League at home:
 '''
 
 import random
+#import bot
 
 EMPTY_FIELD = [
     "+-G-+",
@@ -23,6 +24,15 @@ play_game = True  # We want to play!
 
 
 # Classes
+class Ball:
+    def __init__(self, char):
+        self.x = 0
+        self.y = 0
+        self.char = char
+        self.scored = False
+        self.last_touched = ''
+        self.play_again = 3
+
 class Player:
     def __init__(self, char):
         self.x = 0
@@ -39,14 +49,17 @@ class Player:
         self.playing = True
         self.play_again = 3
 
-class Ball:
+class Agent(Player):
+    
     def __init__(self, char):
-        self.x = 0
-        self.y = 0
-        self.char = char
-        self.scored = False
-        self.last_touched = ''
-        self.play_again = 3
+        super().__init__(char)
+        self.learning_rate = 0.1
+        self.discount_rate = 0.99
+        self.exploration_rate = 1
+        self.max_exploration_rate = 1
+        self.min_exploration_rate = 0.01
+        self.exploration_decay_rate = 0.01
+    
 
 
 # Functions
