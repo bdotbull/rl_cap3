@@ -72,7 +72,7 @@ def print_player_stats(player):
     """
     print(f"Games Played: {player.games_played}")
     print(f"Wins: {player.wins}")
-    print(f"Win %: {player.wins / player.games_played}")
+    print(f"Win %: {player.wins / player.games_played:.2f}")
     print(f"Own Goals: {player.own_goals}")
 
 def player_turn(ball, player):
@@ -257,7 +257,7 @@ def reset_game(ball, player):
 
 def game_over(player):
     print('Game Over.  Thank you for your time!')
-    print('Here are some gameplay statistics:')
+    print('\nHere are some gameplay statistics:')
     print_player_stats(player)
 
 if __name__ == '__main__':
