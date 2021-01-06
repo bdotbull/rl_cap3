@@ -72,7 +72,7 @@ def print_player_stats(player):
     """
     print(f"Games Played: {player.games_played}")
     print(f"Wins: {player.wins}")
-    print(f"Win %: {player.wins / player.games_played:.2f}")
+    print(f"Win %: {player.wins / player.games_played}")
     print(f"Own Goals: {player.own_goals}")
 
 def player_turn(ball, player):
