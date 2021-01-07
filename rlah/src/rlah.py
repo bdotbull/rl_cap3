@@ -42,6 +42,7 @@ class Player:
         self.char = char
         self.name = ''
         self.is_agent = is_agent
+        self.is_human = ~is_agent
         self.scored = False
         self.scored_own_goal = False
         self.games_played = 0
@@ -314,7 +315,9 @@ def setup():
     reset_positions(ball,player) # We want to start in a random position
 
     return ball, player
-        
+
+def init_episode_params():
+    pass
 
 def give_reward():
     pass
@@ -339,6 +342,25 @@ def make_q_table(field_width, field_height, actions):
 
     return q_table
 
+def game_with_q_learning(ball, player, q_table, num_episodes=500, max_steps=100):
+        num_episodes = 500              # Number of Games to play
+        max_steps = 100                 # Max attempts to solve
+        
+        # Keep track of rewards earned
+        rewards_each_episode = np.zeros(len(num_episodes))
+
+        learning_rate = 0.1             # alpha
+        discount_rate = 0.99            # gamma
+
+        exploration_rate = 1
+        max_exploration_rate = 1
+        min_exploration_rate = 0.01
+        exploration_decay_rate = 0.01
+
+        # Play with Q-Learning
+        for episode in range(num_episodes):
+            # init_episode_params()
+
 if __name__ == '__main__':
     print('Welcome to RLAH')
     """
@@ -350,12 +372,20 @@ if __name__ == '__main__':
     change player and ball locations in memory
     """
     ball, player = setup()    # Set up the game and determine if agent or human
+    play_game = player.is_human     # We are human and want to play!
 
     # If the player is an agent, initialize the q-table
+    # ** Can be built into class functionality later,
+    #    and initialized with init_episode_params() **
     if player.is_agent == True:
         q_table = make_q_table(field_width, field_height, actions)
+
+        num_episodes = 500              # Number of Games to play
+        max_steps = 100                 # Max attempts to solve
+        
+        game_with_q_learning(ball, player, q_table, num_episodes, max_steps)
+
     
-    play_game = True          # We want to play!
     while play_game:
         render_state(EMPTY_FIELD.copy(), ball, player)
         

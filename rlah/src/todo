@@ -10,7 +10,7 @@
 
 [ ] main:
 [x] game needs to have different setup based on human or agent
-[ ] game is set up to have episodes and steps
+[ ] game is set up to handle episodes and steps
 
 [x] setup:
 [x] initialize objects (ball, player, q-table(if agent)) based on human/agent,
