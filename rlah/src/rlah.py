@@ -361,6 +361,7 @@ def game_with_q_learning(ball, player, q_table, num_episodes=500,
         discount_rate = 0.99            # gamma
 
         exploration_rate = 1
+        epsilon_exploit_thresh = 0.7         # Pass this threshold to exploit
         max_exploration_rate = 1
         min_exploration_rate = 0.01
         exploration_decay_rate = 0.01
@@ -379,7 +380,16 @@ def game_with_q_learning(ball, player, q_table, num_episodes=500,
                     render_state(EMPTY_FIELD.copy(), ball, player)
                 
                 # Explore-Exploit Trade-off
-
+                if np.random.random() < epsilon_exploit_thresh or np.sum(q_table[state, :]) == 0:
+                    # If we do not pass the threshold needed to exploit,
+                    # or if we do not have an entry for this state,
+                    # we will explore the environment.                    
+                    action = np.random.randint(0,len(actions))
+                else:
+                    # Otherwise, we passed the threshold and will
+                    # take the greedy approach.
+                    action = np.argmax(q_table[state, :])
+                    
                 # Take New Action
 
                 # Update Q-Table
