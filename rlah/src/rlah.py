@@ -60,6 +60,7 @@ class Agent(Player):
         self.exploration_rate = 1
         self.max_exploration_rate = 1
         self.min_exploration_rate = 0.01
+        self.eps_thresh = 0.5
         self.exploration_decay_rate = 0.01
         self.q_table = None
 

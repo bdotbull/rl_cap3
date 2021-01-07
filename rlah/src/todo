@@ -5,17 +5,19 @@
 [ ] 1 step is a player turn
 
 [ ] reward:
-[ ] reward is given based on the is_valid function
+[ ] reward is given with help from is_valid
+[ ] reward updates q table
 
 [ ] main:
-[ ] game needs to have different setup based on human or agent
+[x] game needs to have different setup based on human or agent
+[ ] game is set up to have episodes and steps
 
-[ ] setup:
-[ ] initialize objects (ball, player, q-table(if agent)) based on human/agent,
+[x] setup:
+[x] initialize objects (ball, player, q-table(if agent)) based on human/agent,
 [x] reset the game,
 [x] render the first state
 
-[ ] make_q_table:
+[x] make_q_table:
 "possible actions 0=w, 1=a, 2=s, 3=d"
 a = all_ball_pos (list)  = all possible coords ball could be
 b = all_player_pos (list) = all possible coords player could be
