@@ -6,8 +6,8 @@ Rocket League at home:
 '''
 
 import random
+import time
 import numpy as np
-#import bot
 
 EMPTY_FIELD = [
     "+-G-+",
@@ -133,6 +133,15 @@ def get_player_choice():
             print('Character entered is not in valid moveset.')
 
     return player_choice.lower()
+
+def get_state(ball, player):
+    """Gets the ball and player location information.
+        Returns:
+        --------
+        state (tuple) : ( (ball_x, ball_y) , (player_x, player_y) )
+    """
+    return ( (ball.x, ball.y) , (player.x, player.y) )
+
 
 def calculate_new_player_position(player_choice, player):
     player_newY = player.y    # start with current position
@@ -342,12 +351,11 @@ def make_q_table(field_width, field_height, actions):
 
     return q_table
 
-def game_with_q_learning(ball, player, q_table, num_episodes=500, max_steps=100):
-        num_episodes = 500              # Number of Games to play
-        max_steps = 100                 # Max attempts to solve
-        
+def game_with_q_learning(ball, player, q_table, num_episodes=500, 
+                        max_steps=100, view='full'):
+
         # Keep track of rewards earned
-        rewards_each_episode = np.zeros(len(num_episodes))
+        all_episode_rewards = np.zeros(num_episodes)
 
         learning_rate = 0.1             # alpha
         discount_rate = 0.99            # gamma
@@ -360,6 +368,30 @@ def game_with_q_learning(ball, player, q_table, num_episodes=500, max_steps=100)
         # Play with Q-Learning
         for episode in range(num_episodes):
             # init_episode_params()
+            reset_positions(ball, player)
+            state = get_state(ball, player)
+            done = False
+            reward_from_current_episode = 0
+
+            for step in range(max_steps):
+                # Print the populated field, depending on view setting
+                if view == 'full':
+                    render_state(EMPTY_FIELD.copy(), ball, player)
+                
+                # Explore-Exploit Trade-off
+
+                # Take New Action
+
+                # Update Q-Table
+
+                # Set New State
+
+                # Handle (step) Rewards
+            
+            # Decay the Exploration Rate
+            # Add current reward to `all_episode_rewards`
+
+                
 
 if __name__ == '__main__':
     print('Welcome to RLAH')
