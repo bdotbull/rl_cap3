@@ -484,11 +484,18 @@ def game_with_q_learning(ball, player, q_table, all_ball_player_pos,
                                             learning_rate, discount_rate)
 
                 # Set New State
+                state = new_state
 
                 # Handle Rewards for Step
+                reward_from_current_episode += reward
+
+                # Check to see if the action ended the episode
+                if done == True:
+                    break
             
             # Decay the Exploration Rate
-            # Add current reward to `all_episode_rewards`
+
+            # Add current episode reward to the accumulator
 
                 
 
