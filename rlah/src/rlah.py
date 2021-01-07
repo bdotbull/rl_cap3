@@ -336,6 +336,8 @@ def make_q_table(field_width, field_height, actions):
 
     q_table = np.zeros((len(all_ball_player_pos), len(actions)))
 
+    return q_table
+
 if __name__ == '__main__':
     print('Welcome to RLAH')
     """
@@ -350,7 +352,7 @@ if __name__ == '__main__':
 
     # If the player is an agent, initialize the q-table
     if player.is_agent == True:
-        make_q_table(field_width, field_height, actions)
+        q_table = make_q_table(field_width, field_height, actions)
     
     play_game = True          # We want to play!
     while play_game:
