@@ -388,6 +388,7 @@ def step(ball, player, action):
         else:
             reward += 20        # Big reward for proper goal
 
+    # Get new state information based on what pieces have moved
     new_state = get_state(ball, player, all_ball_player_pos)
 
     return new_state, reward, done
@@ -417,6 +418,22 @@ def make_q_table(field_width, field_height, actions):
     q_table = np.zeros((len(all_ball_player_pos), len(actions)))
 
     return q_table, all_ball_player_pos
+
+def update_q_table(q, new_q, reward, learning_rate, discount_rate):
+    """[summary]
+
+    Args:
+        q (float): [description]
+        new_q (float): [description]
+        reward (float or int): [description]
+        learning_rate (float): [description]
+        discount_rate (float): [description]
+
+    Returns:
+        new_q (float): [description]
+    """
+    return q * (1 - learning_rate) + \
+            learning_rate * (reward + discount_rate * np.max(new_q))
 
 def game_with_q_learning(ball, player, q_table, all_ball_player_pos,
             num_episodes=500, max_steps=100, view='full'):
@@ -462,6 +479,9 @@ def game_with_q_learning(ball, player, q_table, all_ball_player_pos,
                 new_state, reward, done = step(ball, player, action, all_ball_player_pos) 
 
                 # Update State-Action pair in Q-Table
+                q_table[state, action] = update_q_table(q_table[state, action],
+                                            q_table[new_state, :], reward,
+                                            learning_rate, discount_rate)
 
                 # Set New State
 
