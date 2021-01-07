@@ -18,10 +18,11 @@ EMPTY_FIELD = [
 ]
 
 # Variables
-field = EMPTY_FIELD         # Start with a clean board
-field_width = 3             # Horizontal playspace
-field_height = 3            # Vertical playspace
-actions = [0, 1, 2, 3]      # W, A, S, D (respectively)
+field = EMPTY_FIELD                 # Start with a clean board
+field_width = 3                     # Horizontal playspace
+field_height = 3                    # Vertical playspace
+actions = [0, 1, 2, 3]              # W, A, S, D (respectively)
+player_actions = ['w','a','s','d']  # Used in converting agent-player actions
 
 
 # Classes
@@ -112,9 +113,6 @@ def player_turn(ball, player):
     
     move_pieces(player_choice, ball, player)
 
-def agent_turn(ball, player, q_table):
-    pass
-
 def get_player_choice():
     """Ask player where they want to move (W, A, S, D)"""
     possible_input = ['w', 'a', 's', 'd']
@@ -134,13 +132,17 @@ def get_player_choice():
 
     return player_choice.lower()
 
-def get_state(ball, player):
-    """Gets the ball and player location information.
+def get_state(ball, player, all_ball_player_pos):
+    """Uses ball and player location information to find
+        which state we are currently observing.
+
         Returns:
         --------
-        state (tuple) : ( (ball_x, ball_y) , (player_x, player_y) )
+        state (int): The index which relates the location
+                     data to the possible actions.
     """
-    return ( (ball.x, ball.y) , (player.x, player.y) )
+    observation = ( (ball.x, ball.y) , (player.x, player.y) )
+    return np.where(all_ball_player_pos == observation)
 
 
 def calculate_new_player_position(player_choice, player):
@@ -224,27 +226,39 @@ def move_pieces(player_choice, ball, player):
     """Calculates new positions for ball and player. Then moves the pieces
         by changing the values of `playerY`, `playerX`, `ballY`, and `ballX`.
     """
+    kicked = False
     player.y, player.x = calculate_new_player_position(player_choice, player)
     
     # Move ball if 'kicked'
     if (player.y == ball.y) and (player.x == ball.x):
         ball.y, ball.x = calculate_new_ball_position(player_choice, ball)
         ball.last_touched = player.id
+        kicked = True           # Make sure we know the player made contact
+
+    return kicked
 
 def check_if_scored(ball, player):
     """If the ball is in the middle of the upper row and pushed north, we win!
         Will reset board if user chooses to play again.
+        Returns True if a goal was made.
     """
+    someone_scored = False
+
     # Score in opponents goal for large reward
     if ball.y == 0 and ball.x == 2:
         ball.scored = True
         player.scored = True
+        someone_scored = True
     
     # Score in own goal for large (negative) reward
-    if ball.y == 4 and ball.x == 2:
+    elif ball.y == 4 and ball.x == 2:
         ball.scored = True
         player.scored = True
         player.scored_own_goal = True
+        someone_scored = True
+
+    return someone_scored
+
 
 def player_scored(player):
     """
@@ -325,6 +339,59 @@ def setup():
 
     return ball, player
 
+def step(ball, player, action):
+    """This is where the game logic advances on timestep. All calculations and
+                consequences for the player moving and kicking the ball, 
+                with regards to the playspace, will be determined here.
+        Step is the agent-equivalent to a player's turn.
+
+    Args:
+        ball (Ball): The allegedly round thing in play.
+        player (Player): The player or agent object which chose an action.
+        action (int): The action chosen by the player or agent.
+                        Possible actions:
+                        0 : Move Up    ('W' if Human)
+                        1 : Move Left  ('A' if Human)
+                        2 : Move Down  ('S' if Human)
+                        3 : Move Right ('D' if Human)
+
+    Returns:
+        new_state (int): [description]
+        reward (float): [description]
+        done (bool): [description]
+    """
+    reward = -1     # Just for taking a step, we tax
+    kicked = False  # Kicking may be rewarded
+    done = False    # Not done just yet
+
+    # Convert agent-action to keyboard input
+    converted_action = player_actions[action]
+
+    # Check to make sure the move is valid
+    is_valid = check_valid_player_move(converted_action)
+
+    # Move the pieces if valid
+    if is_valid:
+        kicked = move_pieces(converted_action, ball, player)
+
+    # Assign small reward for kicking
+    if kicked:
+        reward += 0.25     # Small reward for making contact with the ball
+    
+    # If someone scored, we will assign a reward and end the game
+    if check_if_scored(ball, player):
+        done = True
+        # check_if_scored() changes ball and player attributes
+        # so we just need to figure out whether it was an own goal
+        if player.scored_own_goal:
+            reward -= 10        # Negative incentive for own goal
+        else:
+            reward += 20        # Big reward for proper goal
+
+    new_state = get_state(ball, player, all_ball_player_pos)
+
+    return new_state, reward, done
+
 def init_episode_params():
     pass
 
@@ -349,10 +416,10 @@ def make_q_table(field_width, field_height, actions):
 
     q_table = np.zeros((len(all_ball_player_pos), len(actions)))
 
-    return q_table
+    return q_table, all_ball_player_pos
 
-def game_with_q_learning(ball, player, q_table, num_episodes=500, 
-                        max_steps=100, view='full'):
+def game_with_q_learning(ball, player, q_table, all_ball_player_pos,
+            num_episodes=500, max_steps=100, view='full'):
 
         # Keep track of rewards earned
         all_episode_rewards = np.zeros(num_episodes)
@@ -361,7 +428,6 @@ def game_with_q_learning(ball, player, q_table, num_episodes=500,
         discount_rate = 0.99            # gamma
 
         exploration_rate = 1
-        epsilon_exploit_thresh = 0.7         # Pass this threshold to exploit
         max_exploration_rate = 1
         min_exploration_rate = 0.01
         exploration_decay_rate = 0.01
@@ -370,7 +436,7 @@ def game_with_q_learning(ball, player, q_table, num_episodes=500,
         for episode in range(num_episodes):
             # init_episode_params()
             reset_positions(ball, player)
-            state = get_state(ball, player)
+            state = get_state(ball, player, all_ball_player_pos)
             done = False
             reward_from_current_episode = 0
 
@@ -380,7 +446,9 @@ def game_with_q_learning(ball, player, q_table, num_episodes=500,
                     render_state(EMPTY_FIELD.copy(), ball, player)
                 
                 # Explore-Exploit Trade-off
-                if np.random.random() < epsilon_exploit_thresh or np.sum(q_table[state, :]) == 0:
+                epsilon = np.random.uniform(0,1)   # Exploit-Threshold
+                if ((exploration_rate < epsilon)
+                                or np.sum(q_table[state, :]) ) == 0:
                     # If we do not pass the threshold needed to exploit,
                     # or if we do not have an entry for this state,
                     # we will explore the environment.                    
@@ -389,14 +457,15 @@ def game_with_q_learning(ball, player, q_table, num_episodes=500,
                     # Otherwise, we passed the threshold and will
                     # take the greedy approach.
                     action = np.argmax(q_table[state, :])
-                    
-                # Take New Action
 
-                # Update Q-Table
+                # Take New Action
+                new_state, reward, done = step(ball, player, action, all_ball_player_pos) 
+
+                # Update State-Action pair in Q-Table
 
                 # Set New State
 
-                # Handle (step) Rewards
+                # Handle Rewards for Step
             
             # Decay the Exploration Rate
             # Add current reward to `all_episode_rewards`
@@ -420,12 +489,13 @@ if __name__ == '__main__':
     # ** Can be built into class functionality later,
     #    and initialized with init_episode_params() **
     if player.is_agent == True:
-        q_table = make_q_table(field_width, field_height, actions)
+        q_table, all_ball_player_pos = make_q_table(field_width, field_height, actions)
 
         num_episodes = 500              # Number of Games to play
         max_steps = 100                 # Max attempts to solve
         
-        game_with_q_learning(ball, player, q_table, num_episodes, max_steps)
+        game_with_q_learning(ball, player, q_table,
+                            all_ball_player_pos, num_episodes, max_steps)
 
     
     while play_game:
