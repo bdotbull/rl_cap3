@@ -35,12 +35,13 @@ class Ball:
         self.play_again = 3
 
 class Player:
-    def __init__(self, char):
+    def __init__(self, char, is_agent=False):
         self.x = 0
         self.y = 0
         self.id = 0
         self.char = char
         self.name = ''
+        self.is_agent = is_agent
         self.scored = False
         self.scored_own_goal = False
         self.games_played = 0
@@ -258,7 +259,7 @@ def player_scored(player):
             player.play_again = play_again
             break
 
-def reset_game(ball, player):
+def reset_positions(ball, player):
     """Resets the board, chooses a random location for the ball and player to spawn.
     TODO: ensure entitites did not spawn on same tile 
             (while x's and y's match:  reset())
@@ -278,12 +279,40 @@ def reset_game(ball, player):
     ball.last_touched = ''
 
 def game_over(player):
-    print('Game Over.  Thank you for your time!')
+    print('\n\nGame Over.  Thank you for your time!')
     print('\nHere are some gameplay statistics:')
     print_player_stats(player)
 
 def setup():
-    pass
+    """Determines if Human or Agent playing and sets up the game accordingly.
+
+        Returns:
+        Ball and Player object
+    """
+    # Ask user about pulse
+    print('Shall we play or let an agent do the work?')
+    while True:
+        print("0 = I would like to play")
+        print("1 = Let the agent do the work")
+        try:
+            usr_input = int(input("Your answer: "))
+            if usr_input in [0,1]:
+                break
+        except:
+            print('Please answer with a 0 (player) or 1 (agent)')
+    
+    # If 1, the player will be an agent
+    if usr_input == 1:
+        player = Player(char='P', is_agent=True)
+    else:
+        player = Player(char='P')
+
+    ball = Ball(char='@')        # Create ball object with chosen character
+
+    reset_positions(ball,player) # We want to start in a random position
+
+    return ball, player
+        
 
 def give_reward():
     pass
@@ -301,9 +330,7 @@ if __name__ == '__main__':
     compute where to move the player and the ball
     change player and ball locations in memory
     """
-    ball = Ball('@')      # create a ball, given a character representation
-    player = Player('P')  # create a player, given a character representation
-    reset_game(ball, player)    # start in a random state
+    ball, player = setup()
 
     while play_game:
         render_state(EMPTY_FIELD.copy(), ball, player)
@@ -315,7 +342,7 @@ if __name__ == '__main__':
 
         # The game ends when a player scores, so we need to reset or end
         if player.play_again == 1:
-            reset_game(ball, player)
+            reset_positions(ball, player)
             player.play_again = 42
             render_state(EMPTY_FIELD.copy(), ball, player)
         elif player.play_again == 0:
@@ -324,4 +351,3 @@ if __name__ == '__main__':
             break
 
         player_turn(ball, player)
-        render_state(EMPTY_FIELD.copy(), ball, player)
