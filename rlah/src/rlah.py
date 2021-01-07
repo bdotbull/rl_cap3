@@ -6,7 +6,7 @@ Rocket League at home:
 '''
 
 import random
-import numpy as np
+#import numpy as np
 #import bot
 
 EMPTY_FIELD = [
@@ -90,11 +90,12 @@ def print_player_stats(player):
     """
     print(f"Games Played: {player.games_played}")
     print(f"Wins: {player.wins}")
-    print(f"Win %: {player.wins / player.games_played:.2f}")
+    print(f"Win %: {(player.wins / player.games_played)*100:.2f}%")
     print(f"Own Goals: {player.own_goals}")
 
 def player_turn(ball, player):
-    """Get player choice, move pieces if valid"""
+    """*Human - Step*
+        Get player choice, move pieces if valid"""
     while True:
         try:
             player_choice = get_player_choice()
@@ -106,6 +107,9 @@ def player_turn(ball, player):
             break
     
     move_pieces(player_choice, ball, player)
+
+def agent_turn(ball, player, q_table):
+    pass
 
 def get_player_choice():
     """Ask player where they want to move (W, A, S, D)"""
@@ -278,6 +282,15 @@ def game_over(player):
     print('\nHere are some gameplay statistics:')
     print_player_stats(player)
 
+def setup():
+    pass
+
+def give_reward():
+    pass
+
+def make_q_table():
+    pass
+
 if __name__ == '__main__':
     print('Welcome to RLAH')
     """
@@ -311,3 +324,4 @@ if __name__ == '__main__':
             break
 
         player_turn(ball, player)
+        render_state(EMPTY_FIELD.copy(), ball, player)
