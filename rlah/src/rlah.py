@@ -6,7 +6,7 @@ Rocket League at home:
 '''
 
 import random
-#import numpy as np
+import numpy as np
 #import bot
 
 EMPTY_FIELD = [
@@ -18,10 +18,10 @@ EMPTY_FIELD = [
 ]
 
 # Variables
-field = EMPTY_FIELD    # Start with a clean board
-field_width = 3   # Horizontal playspace  (used for random positions on reset)
-field_height = 3  # Vertical playspace    (used for random positions on reset)
-play_game = True  # We want to play!
+field = EMPTY_FIELD         # Start with a clean board
+field_width = 3             # Horizontal playspace
+field_height = 3            # Vertical playspace
+actions = [0, 1, 2, 3]      # W, A, S, D (respectively)
 
 
 # Classes
@@ -76,6 +76,7 @@ def render_state(field, ball, player):
     field[ball.y] = insert_char(field[ball.y], ball.char, ball.x)
     field[player.y] = insert_char(field[player.y], player.char, player.x)
     
+    print('\n\n')   # give some space to distinguish turns
     for row in field:
         print(row)
 
@@ -317,8 +318,23 @@ def setup():
 def give_reward():
     pass
 
-def make_q_table():
-    pass
+def make_q_table(field_width, field_height, actions):
+    """
+    """
+    # Generate all possible ball positions
+    b_xs = [x for x in range(1, field_width +1)]
+    b_ys = [y for y in range(1, field_height +1)]
+    all_ball_pos = [(x,y) for x in b_xs for y in b_ys]
+
+    # Generate all possible player positions
+    p_xs = [x for x in range(1, field_width +1)]
+    p_ys = [y for y in range(1, field_height +1)]
+    all_player_pos = [(x,y) for x in p_xs for y in p_ys]
+
+    # Generate all possible ball and player positions
+    all_ball_player_pos = [(b,p) for b in all_ball_pos for p in all_player_pos]
+
+    q_table = np.zeros((len(all_ball_player_pos), len(actions)))
 
 if __name__ == '__main__':
     print('Welcome to RLAH')
@@ -330,8 +346,13 @@ if __name__ == '__main__':
     compute where to move the player and the ball
     change player and ball locations in memory
     """
-    ball, player = setup()
+    ball, player = setup()    # Set up the game and determine if agent or human
 
+    # If the player is an agent, initialize the q-table
+    if player.is_agent == True:
+        make_q_table(field_width, field_height, actions)
+    
+    play_game = True          # We want to play!
     while play_game:
         render_state(EMPTY_FIELD.copy(), ball, player)
         
