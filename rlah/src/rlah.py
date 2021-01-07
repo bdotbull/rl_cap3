@@ -396,9 +396,6 @@ def step(ball, player, action):
 def init_episode_params():
     pass
 
-def give_reward():
-    pass
-
 def make_q_table(field_width, field_height, actions):
     """
     """
@@ -493,11 +490,24 @@ def game_with_q_learning(ball, player, q_table, all_ball_player_pos,
                 if done == True:
                     break
             
-            # Decay the Exploration Rate
+            # Decay the Exploration Rate (exponential decay)
+            exploration_rate = min_exploration_rate + \
+                        (max_exploration_rate - min_exploration_rate) * \
+                        np.exp(-exploration_decay_rate * episode)
 
             # Add current episode reward to the accumulator
+            all_episode_rewards.append(reward_from_current_episode)
+        
+        # Calculate and print useful reward info
+        rewards_per_thousand_episodes = np.split(np.array(all_episode_rewards),
+                                            num_episodes / 1000)
+        count = 1000
 
-                
+        print("**** Average reward per 1000 episodes ****\n")
+        for r in rewards_per_thousand_episodes:
+            print(count, ": ", str(sum(r/1000)))
+            count += 1000
+
 
 if __name__ == '__main__':
     print('Welcome to RLAH')
