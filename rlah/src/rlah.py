@@ -142,7 +142,7 @@ def get_state(ball, player, all_ball_player_pos):
                      data to the possible actions.
     """
     observation = ( (ball.x, ball.y) , (player.x, player.y) )
-    return np.where(all_ball_player_pos == observation)[0]
+    return all_ball_player_pos.index(observation)
 
 
 def calculate_new_player_position(player_choice, player):
@@ -384,8 +384,10 @@ def game_step(ball, player, action, all_ball_player_pos):
         # check_if_scored() changes ball and player attributes
         # so we just need to figure out whether it was an own goal
         if player.scored_own_goal:
+            print('Oh no!  Own goal')
             reward -= 10        # Negative incentive for own goal
         else:
+            print('You scored a proper goal!')
             reward += 20        # Big reward for proper goal
 
     # Get new state information based on what pieces have moved
@@ -396,21 +398,24 @@ def game_step(ball, player, action, all_ball_player_pos):
 def init_episode_params():
     pass
 
+def print_episode_recap():
+    pass
+
 def make_q_table(field_width, field_height, actions):
     """
     """
     # Generate all possible ball positions
-    b_xs = [x for x in range(1, field_width +1)]
-    b_ys = [y for y in range(1, field_height +1)]
+    b_xs = [x for x in range(0, field_width +2)]
+    b_ys = [y for y in range(0, field_height +2)]
     all_ball_pos = [(x,y) for x in b_xs for y in b_ys]
 
     # Generate all possible player positions
-    p_xs = [x for x in range(1, field_width +1)]
-    p_ys = [y for y in range(1, field_height +1)]
+    p_xs = [x for x in range(0, field_width +2)]
+    p_ys = [y for y in range(0, field_height +2)]
     all_player_pos = [(x,y) for x in p_xs for y in p_ys]
 
     # Generate all possible ball and player positions
-    all_ball_player_pos = np.array([(b,p) for b in all_ball_pos for p in all_player_pos])
+    all_ball_player_pos = [(b,p) for b in all_ball_pos for p in all_player_pos]
 
     q_table = np.zeros((len(all_ball_player_pos), len(actions)))
 
@@ -497,7 +502,7 @@ def game_with_q_learning(ball, player, q_table, all_ball_player_pos,
                         np.exp(-exploration_decay_rate * episode)
 
             # Add current episode reward to the accumulator
-            all_episode_rewards.append(reward_from_current_episode)
+            all_episode_rewards[episode] = reward_from_current_episode
         
         # Calculate and print useful reward info
         rewards_per_thousand_episodes = np.split(np.array(all_episode_rewards),
