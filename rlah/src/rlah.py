@@ -398,8 +398,35 @@ def game_step(ball, player, action, all_ball_player_pos):
 def init_episode_params():
     pass
 
-def print_episode_recap():
-    pass
+def print_agent_action(action):
+    """Converts the action taken by the agent into a human-readable
+        string and prints it to the screen.
+                        Possible actions:
+                        0 : Move Up    ('W')
+                        1 : Move Left  ('A')
+                        2 : Move Down  ('S')
+                        3 : Move Right ('D')
+
+    Args:
+        action (int): The agent's action
+    """
+    if action == 0:
+        print("0: Move Up ('W')")
+    elif action == 1:
+        print("1: Move Left ('A')")
+    elif action == 2:
+        print("2: Move Down ('S')")
+    elif action == 3:
+        print("3: Move Right ('D')")
+    else:
+        print(f"Action chose: {action}")    # For debugging purposes
+
+def print_episode_recap(episode, steps_to_complete_episode, 
+                                reward_from_current_episode):
+    print(f"***EPISODE RECAP***")
+    print(f"Episode: {episode}")
+    print(f"Steps to completion: {steps_to_complete_episode}")
+    print(f"Reward earned for this episode: {reward_from_current_episode}")
 
 def make_q_table(field_width, field_height, actions):
     """
@@ -449,7 +476,7 @@ def game_with_q_learning(ball, player, q_table, all_ball_player_pos,
         exploration_rate = 1
         max_exploration_rate = 1
         min_exploration_rate = 0.01
-        exploration_decay_rate = 0.01
+        exploration_decay_rate = 0.001
 
         # Play with Q-Learning
         for episode in range(num_episodes):
@@ -458,6 +485,7 @@ def game_with_q_learning(ball, player, q_table, all_ball_player_pos,
             state = get_state(ball, player, all_ball_player_pos)
             done = False
             reward_from_current_episode = 0
+            steps_to_complete_episode = 0
 
             for step in range(max_steps):
                 # Print the populated field, depending on view setting
@@ -477,7 +505,11 @@ def game_with_q_learning(ball, player, q_table, all_ball_player_pos,
                     # take the greedy approach.
                     action = np.argmax(q_table[state, :])
 
-                print(action)
+                # Render the action and pause for viewer
+                print_agent_action(action)
+                #if view == 'full':
+                #    time.sleep(.3)
+
                 # Take New Action
                 new_state, reward, done = game_step(ball, player, action, all_ball_player_pos) 
                 
@@ -494,6 +526,7 @@ def game_with_q_learning(ball, player, q_table, all_ball_player_pos,
 
                 # Check to see if the action ended the episode
                 if done == True:
+                    steps_to_complete_episode += step    # Step-Related Tracking
                     break
             
             # Decay the Exploration Rate (exponential decay)
@@ -503,9 +536,14 @@ def game_with_q_learning(ball, player, q_table, all_ball_player_pos,
 
             # Add current episode reward to the accumulator
             all_episode_rewards[episode] = reward_from_current_episode
+
+            # Print Useful Episode Info
+            print_episode_recap(episode, steps_to_complete_episode, 
+                                reward_from_current_episode)
+            #time.sleep(3)
         
         # Calculate and print useful reward info
-        rewards_per_thousand_episodes = np.split(np.array(all_episode_rewards),
+        rewards_per_thousand_episodes = np.split(all_episode_rewards,
                                             num_episodes / 1000)
         count = 1000
 
@@ -534,7 +572,7 @@ if __name__ == '__main__':
     if player.is_agent == True:
         q_table, all_ball_player_pos = make_q_table(field_width, field_height, actions)
 
-        num_episodes = 500              # Number of Games to play
+        num_episodes = 3000              # Number of Games to play
         max_steps = 100                 # Max attempts to solve
         
         game_with_q_learning(ball, player, q_table,
