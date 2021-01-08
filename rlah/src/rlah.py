@@ -146,6 +146,16 @@ def get_state(ball, player, all_ball_player_pos):
 
 
 def calculate_new_player_position(player_choice, player):
+    """Calculates new player position.  Does not care if the result
+        is in the valid playspace.
+
+    Args:
+        player_choice (string): Either 'w','a','s', or 'd'
+        player (Player): The player object which made the choice.
+
+    Returns:
+        The new player coordinates in y, x order.
+    """
     player_newY = player.y    # start with current position
     player_newX = player.x    # start with current position
     
@@ -162,10 +172,13 @@ def calculate_new_player_position(player_choice, player):
     return player_newY, player_newX
 
 def calculate_new_ball_position(player_choice, ball):
-    """ Calculatees new ball position.
+    """ Calculates new ball position.
         If the ball is against a wall and is hit towards the same wall,
         the ball and player swap positions.  This is as if you were to slam
         the ball into the wall and it bounces behind you.
+
+    Returns:
+        The new ball coordinates in y, x order.
     """
     ball_newY = ball.y    # start with current position
     ball_newX = ball.x    # start with current position
@@ -202,6 +215,10 @@ def check_valid_player_move(player_choice, player):
         - player moving in bounds (not through walls or into goal)
         Calculates next move based on `player_choice` 
         and returns if the player would be in bounds.
+    
+    Returns:
+        True if the attempted move is within the playspace,
+        False if otherwise.
     """
     is_valid = False   # start with assumption the move is not valid
     
@@ -225,6 +242,10 @@ def insert_char(string, char, position):
 def move_pieces(player_choice, ball, player):
     """Calculates new positions for ball and player. Then moves the pieces
         by changing the values of `playerY`, `playerX`, `ballY`, and `ballX`.
+
+    Returns:
+        True if the player made contact with the ball,
+        False if otherwise.
     """
     kicked = False
     player.y, player.x = calculate_new_player_position(player_choice, player)
@@ -240,7 +261,10 @@ def move_pieces(player_choice, ball, player):
 def check_if_scored(ball, player):
     """If the ball is in the middle of the upper row and pushed north, we win!
         Will reset board if user chooses to play again.
-        Returns True if a goal was made.
+        
+        Returns:
+        True if any goal was made,
+        False if otherwise.
     """
     someone_scored = False
 
