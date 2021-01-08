@@ -142,7 +142,7 @@ def get_state(ball, player, all_ball_player_pos):
                      data to the possible actions.
     """
     observation = ( (ball.x, ball.y) , (player.x, player.y) )
-    return np.where(all_ball_player_pos == observation)
+    return np.where(all_ball_player_pos == observation)[0]
 
 
 def calculate_new_player_position(player_choice, player):
@@ -339,7 +339,7 @@ def setup():
 
     return ball, player
 
-def step(ball, player, action):
+def game_step(ball, player, action, all_ball_player_pos):
     """This is where the game logic advances on timestep. All calculations and
                 consequences for the player moving and kicking the ball, 
                 with regards to the playspace, will be determined here.
@@ -368,7 +368,7 @@ def step(ball, player, action):
     converted_action = player_actions[action]
 
     # Check to make sure the move is valid
-    is_valid = check_valid_player_move(converted_action)
+    is_valid = check_valid_player_move(converted_action, player)
 
     # Move the pieces if valid
     if is_valid:
@@ -410,7 +410,7 @@ def make_q_table(field_width, field_height, actions):
     all_player_pos = [(x,y) for x in p_xs for y in p_ys]
 
     # Generate all possible ball and player positions
-    all_ball_player_pos = [(b,p) for b in all_ball_pos for p in all_player_pos]
+    all_ball_player_pos = np.array([(b,p) for b in all_ball_pos for p in all_player_pos])
 
     q_table = np.zeros((len(all_ball_player_pos), len(actions)))
 
@@ -466,15 +466,16 @@ def game_with_q_learning(ball, player, q_table, all_ball_player_pos,
                     # If we do not pass the threshold needed to exploit,
                     # or if we do not have an entry for this state,
                     # we will explore the environment.                    
-                    action = np.random.randint(0,len(actions))
+                    action = np.random.randint(0,len(actions)-1)
                 else:
                     # Otherwise, we passed the threshold and will
                     # take the greedy approach.
                     action = np.argmax(q_table[state, :])
 
+                print(action)
                 # Take New Action
-                new_state, reward, done = step(ball, player, action, all_ball_player_pos) 
-
+                new_state, reward, done = game_step(ball, player, action, all_ball_player_pos) 
+                
                 # Update State-Action pair in Q-Table
                 q_table[state, action] = update_q_table(q_table[state, action],
                                             q_table[new_state, :], reward,
