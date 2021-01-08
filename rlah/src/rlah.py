@@ -234,6 +234,9 @@ def check_valid_player_move(player_choice, player):
 
 def insert_char(string, char, position):
     """Inserts a char into string.  Does not change string length.
+
+    Returns:
+        The input `string` with `char` inserted at `position'.
     """
     string_ = list(string)
     string_[position] = char
@@ -285,9 +288,17 @@ def check_if_scored(ball, player):
 
 
 def player_scored(player):
-    """
+    """For Human Game.
+        This function is executed after the program checks the game
+        to see if the player has scored. After a goal is scored, the
+        game is over. This function asks if the player would like
+        to play again, then sets the attribute accordingly.
+
+    Args:
+        player (Player): The player that scored.
     """
     # If the player has NOT scored an own goal, celebrate!
+    # Otherwise, inform the player of their mistake and loss.
     if player.scored_own_goal == False:
         print("Player has scored! You win!")
         player.wins += 1
@@ -311,8 +322,7 @@ def player_scored(player):
 
 def reset_positions(ball, player):
     """Resets the board, chooses a random location for the ball and player to spawn.
-    TODO: ensure entitites did not spawn on same tile 
-            (while x's and y's match:  reset())
+        TODO: ensure entitites do not spawn on same tile
     """
     # Reset locations (like kickoff)
     ball.y = random.randint(1, field_height)
@@ -337,7 +347,7 @@ def setup():
     """Determines if Human or Agent playing and sets up the game accordingly.
 
         Returns:
-        Ball and Player object
+        Initialized Ball and Player objects
     """
     # Ask user about pulse
     print('Shall we play or let an agent do the work?')
@@ -380,9 +390,9 @@ def game_step(ball, player, action, all_ball_player_pos):
                         3 : Move Right ('D' if Human)
 
     Returns:
-        new_state (int): [description]
-        reward (float): [description]
-        done (bool): [description]
+        new_state (int): The state after the chosen action has been executed.
+        reward (float): Reward associated with the actions taken this step.
+        done (bool): If the action ended the game, returns True.
     """
     reward = -1     # Just for taking a step, we tax
     kicked = False  # Kicking may be rewarded
@@ -398,9 +408,9 @@ def game_step(ball, player, action, all_ball_player_pos):
     if is_valid:
         kicked = move_pieces(converted_action, ball, player)
 
-    # Assign small reward for kicking
+    # Assign small reward for making contact with the ball
     if kicked:
-        reward += 0.25     # Small reward for making contact with the ball
+        reward += 0.25
     
     # If someone scored, we will assign a reward and end the game
     if check_if_scored(ball, player):
@@ -418,9 +428,6 @@ def game_step(ball, player, action, all_ball_player_pos):
     new_state = get_state(ball, player, all_ball_player_pos)
 
     return new_state, reward, done
-
-def init_episode_params():
-    pass
 
 def print_agent_action(action):
     """Converts the action taken by the agent into a human-readable
@@ -443,7 +450,7 @@ def print_agent_action(action):
     elif action == 3:
         print("3: Move Right ('D')")
     else:
-        print(f"Action chose: {action}")    # For debugging purposes
+        print(f"Action chose: {action}")    # Was used for debugging
 
 def print_episode_recap(episode, steps_to_complete_episode, 
                                 reward_from_current_episode):
@@ -531,8 +538,8 @@ def game_with_q_learning(ball, player, q_table, all_ball_player_pos,
 
                 # Render the action and pause for viewer
                 print_agent_action(action)
-                #if view == 'full':
-                #    time.sleep(.3)
+                if view == 'full':
+                    time.sleep(.3)
 
                 # Take New Action
                 new_state, reward, done = game_step(ball, player, action, all_ball_player_pos) 
@@ -564,7 +571,7 @@ def game_with_q_learning(ball, player, q_table, all_ball_player_pos,
             # Print Useful Episode Info
             print_episode_recap(episode, steps_to_complete_episode, 
                                 reward_from_current_episode)
-            #time.sleep(3)
+            time.sleep(3)
         
         # Calculate and print useful reward info
         rewards_per_thousand_episodes = np.split(all_episode_rewards,
