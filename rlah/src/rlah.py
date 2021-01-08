@@ -339,6 +339,12 @@ def reset_positions(ball, player):
     ball.last_touched = ''
 
 def game_over(player):
+    """Once the game has ended and the user does not wish to reset,
+        this function will print the finalized player stats.
+
+    Args:
+        player (Player): The Player who no longer wishes to play.
+    """
     print('\n\nGame Over.  Thank you for your time!')
     print('\nHere are some gameplay statistics:')
     print_player_stats(player)
@@ -450,17 +456,37 @@ def print_agent_action(action):
     elif action == 3:
         print("3: Move Right ('D')")
     else:
-        print(f"Action chose: {action}")    # Was used for debugging
+        print(f"Action chose: {action}")    # Used for debugging
 
 def print_episode_recap(episode, steps_to_complete_episode, 
                                 reward_from_current_episode):
+    """At the end of an episode of agent play, this function is called
+        to print useful information related to the episode which just occurred.
+
+    Args:
+        episode (int): The current episode which has just ended.
+        steps_to_complete_episode (int): Number of steps the agent required
+                                            to score a goal.
+        reward_from_current_episode (float): The total reward from the given episode.
+    """
     print(f"***EPISODE RECAP***")
     print(f"Episode: {episode}")
     print(f"Steps to completion: {steps_to_complete_episode}")
     print(f"Reward earned for this episode: {reward_from_current_episode}")
 
 def make_q_table(field_width, field_height, actions):
-    """
+    """Creates a Q-Table of all zeros.
+
+    Args:
+        field_width (int): Horizontal playspace
+        field_height (int): Vertical playspace (not including goals)
+        actions (list): Possible actions the agent may take. List of integers.
+
+    Returns:
+        q_table (numpy array): Q-table populated with zeros.
+        all_ball_player_pos (list): All possible ball and player combinations.
+                                    List of tuples. One tuple would look like:
+                                    ( (ball.x, ball.y) , (player.x, player.y) )
     """
     # Generate all possible ball positions
     b_xs = [x for x in range(0, field_width +2)]
@@ -480,17 +506,17 @@ def make_q_table(field_width, field_height, actions):
     return q_table, all_ball_player_pos
 
 def update_q_table(q, new_q, reward, learning_rate, discount_rate):
-    """[summary]
+    """Updates the Q-table using the Bellman equation.
 
     Args:
-        q (float): [description]
-        new_q (float): [description]
-        reward (float or int): [description]
-        learning_rate (float): [description]
-        discount_rate (float): [description]
+        q (float): Current q-value for given state-action pair
+        new_q (float): Next state-action pair. (s',a') at t+1
+        reward (float or int): Reward earned during a given step.
+        learning_rate (float): alpha. 
+        discount_rate (float): gamma. 
 
     Returns:
-        new_q (float): [description]
+        New Q-Value for given state-action pair
     """
     return q * (1 - learning_rate) + \
             learning_rate * (reward + discount_rate * np.max(new_q))
@@ -571,7 +597,7 @@ def game_with_q_learning(ball, player, q_table, all_ball_player_pos,
             # Print Useful Episode Info
             print_episode_recap(episode, steps_to_complete_episode, 
                                 reward_from_current_episode)
-            time.sleep(3)
+            time.sleep(3)   # Give the user time to read the episode recap
         
         # Calculate and print useful reward info
         rewards_per_thousand_episodes = np.split(all_episode_rewards,
