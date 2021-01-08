@@ -6,8 +6,8 @@ Rocket League at home:
 '''
 
 import random
+import time
 import numpy as np
-#import bot
 
 EMPTY_FIELD = [
     "+-G-+",
@@ -18,10 +18,11 @@ EMPTY_FIELD = [
 ]
 
 # Variables
-field = EMPTY_FIELD         # Start with a clean board
-field_width = 3             # Horizontal playspace
-field_height = 3            # Vertical playspace
-actions = [0, 1, 2, 3]      # W, A, S, D (respectively)
+field = EMPTY_FIELD                 # Start with a clean board
+field_width = 3                     # Horizontal playspace
+field_height = 3                    # Vertical playspace
+actions = [0, 1, 2, 3]              # W, A, S, D (respectively)
+player_actions = ['w','a','s','d']  # Used in converting agent-player actions
 
 
 # Classes
@@ -42,6 +43,7 @@ class Player:
         self.char = char
         self.name = ''
         self.is_agent = is_agent
+        self.is_human = ~is_agent
         self.scored = False
         self.scored_own_goal = False
         self.games_played = 0
@@ -111,9 +113,6 @@ def player_turn(ball, player):
     
     move_pieces(player_choice, ball, player)
 
-def agent_turn(ball, player, q_table):
-    pass
-
 def get_player_choice():
     """Ask player where they want to move (W, A, S, D)"""
     possible_input = ['w', 'a', 's', 'd']
@@ -132,6 +131,19 @@ def get_player_choice():
             print('Character entered is not in valid moveset.')
 
     return player_choice.lower()
+
+def get_state(ball, player, all_ball_player_pos):
+    """Uses ball and player location information to find
+        which state we are currently observing.
+
+        Returns:
+        --------
+        state (int): The index which relates the location
+                     data to the possible actions.
+    """
+    observation = ( (ball.x, ball.y) , (player.x, player.y) )
+    return all_ball_player_pos.index(observation)
+
 
 def calculate_new_player_position(player_choice, player):
     player_newY = player.y    # start with current position
@@ -214,27 +226,39 @@ def move_pieces(player_choice, ball, player):
     """Calculates new positions for ball and player. Then moves the pieces
         by changing the values of `playerY`, `playerX`, `ballY`, and `ballX`.
     """
+    kicked = False
     player.y, player.x = calculate_new_player_position(player_choice, player)
     
     # Move ball if 'kicked'
     if (player.y == ball.y) and (player.x == ball.x):
         ball.y, ball.x = calculate_new_ball_position(player_choice, ball)
         ball.last_touched = player.id
+        kicked = True           # Make sure we know the player made contact
+
+    return kicked
 
 def check_if_scored(ball, player):
     """If the ball is in the middle of the upper row and pushed north, we win!
         Will reset board if user chooses to play again.
+        Returns True if a goal was made.
     """
+    someone_scored = False
+
     # Score in opponents goal for large reward
     if ball.y == 0 and ball.x == 2:
         ball.scored = True
         player.scored = True
+        someone_scored = True
     
     # Score in own goal for large (negative) reward
-    if ball.y == 4 and ball.x == 2:
+    elif ball.y == 4 and ball.x == 2:
         ball.scored = True
         player.scored = True
         player.scored_own_goal = True
+        someone_scored = True
+
+    return someone_scored
+
 
 def player_scored(player):
     """
@@ -314,22 +338,107 @@ def setup():
     reset_positions(ball,player) # We want to start in a random position
 
     return ball, player
-        
 
-def give_reward():
+def game_step(ball, player, action, all_ball_player_pos):
+    """This is where the game logic advances on timestep. All calculations and
+                consequences for the player moving and kicking the ball, 
+                with regards to the playspace, will be determined here.
+        Step is the agent-equivalent to a player's turn.
+
+    Args:
+        ball (Ball): The allegedly round thing in play.
+        player (Player): The player or agent object which chose an action.
+        action (int): The action chosen by the player or agent.
+                        Possible actions:
+                        0 : Move Up    ('W' if Human)
+                        1 : Move Left  ('A' if Human)
+                        2 : Move Down  ('S' if Human)
+                        3 : Move Right ('D' if Human)
+
+    Returns:
+        new_state (int): [description]
+        reward (float): [description]
+        done (bool): [description]
+    """
+    reward = -1     # Just for taking a step, we tax
+    kicked = False  # Kicking may be rewarded
+    done = False    # Not done just yet
+
+    # Convert agent-action to keyboard input
+    converted_action = player_actions[action]
+
+    # Check to make sure the move is valid
+    is_valid = check_valid_player_move(converted_action, player)
+
+    # Move the pieces if valid
+    if is_valid:
+        kicked = move_pieces(converted_action, ball, player)
+
+    # Assign small reward for kicking
+    if kicked:
+        reward += 0.25     # Small reward for making contact with the ball
+    
+    # If someone scored, we will assign a reward and end the game
+    if check_if_scored(ball, player):
+        done = True
+        # check_if_scored() changes ball and player attributes
+        # so we just need to figure out whether it was an own goal
+        if player.scored_own_goal:
+            print('Oh no!  Own goal')
+            reward -= 10        # Negative incentive for own goal
+        else:
+            print('You scored a proper goal!')
+            reward += 20        # Big reward for proper goal
+
+    # Get new state information based on what pieces have moved
+    new_state = get_state(ball, player, all_ball_player_pos)
+
+    return new_state, reward, done
+
+def init_episode_params():
     pass
+
+def print_agent_action(action):
+    """Converts the action taken by the agent into a human-readable
+        string and prints it to the screen.
+                        Possible actions:
+                        0 : Move Up    ('W')
+                        1 : Move Left  ('A')
+                        2 : Move Down  ('S')
+                        3 : Move Right ('D')
+
+    Args:
+        action (int): The agent's action
+    """
+    if action == 0:
+        print("0: Move Up ('W')")
+    elif action == 1:
+        print("1: Move Left ('A')")
+    elif action == 2:
+        print("2: Move Down ('S')")
+    elif action == 3:
+        print("3: Move Right ('D')")
+    else:
+        print(f"Action chose: {action}")    # For debugging purposes
+
+def print_episode_recap(episode, steps_to_complete_episode, 
+                                reward_from_current_episode):
+    print(f"***EPISODE RECAP***")
+    print(f"Episode: {episode}")
+    print(f"Steps to completion: {steps_to_complete_episode}")
+    print(f"Reward earned for this episode: {reward_from_current_episode}")
 
 def make_q_table(field_width, field_height, actions):
     """
     """
     # Generate all possible ball positions
-    b_xs = [x for x in range(1, field_width +1)]
-    b_ys = [y for y in range(1, field_height +1)]
+    b_xs = [x for x in range(0, field_width +2)]
+    b_ys = [y for y in range(0, field_height +2)]
     all_ball_pos = [(x,y) for x in b_xs for y in b_ys]
 
     # Generate all possible player positions
-    p_xs = [x for x in range(1, field_width +1)]
-    p_ys = [y for y in range(1, field_height +1)]
+    p_xs = [x for x in range(0, field_width +2)]
+    p_ys = [y for y in range(0, field_height +2)]
     all_player_pos = [(x,y) for x in p_xs for y in p_ys]
 
     # Generate all possible ball and player positions
@@ -337,7 +446,112 @@ def make_q_table(field_width, field_height, actions):
 
     q_table = np.zeros((len(all_ball_player_pos), len(actions)))
 
-    return q_table
+    return q_table, all_ball_player_pos
+
+def update_q_table(q, new_q, reward, learning_rate, discount_rate):
+    """[summary]
+
+    Args:
+        q (float): [description]
+        new_q (float): [description]
+        reward (float or int): [description]
+        learning_rate (float): [description]
+        discount_rate (float): [description]
+
+    Returns:
+        new_q (float): [description]
+    """
+    return q * (1 - learning_rate) + \
+            learning_rate * (reward + discount_rate * np.max(new_q))
+
+def game_with_q_learning(ball, player, q_table, all_ball_player_pos,
+            num_episodes=500, max_steps=100, view='full'):
+
+        # Keep track of rewards earned
+        all_episode_rewards = np.zeros(num_episodes)
+
+        learning_rate = 0.1             # alpha
+        discount_rate = 0.99            # gamma
+
+        exploration_rate = 1
+        max_exploration_rate = 1
+        min_exploration_rate = 0.01
+        exploration_decay_rate = 0.001
+
+        # Play with Q-Learning
+        for episode in range(num_episodes):
+            # init_episode_params()
+            reset_positions(ball, player)
+            state = get_state(ball, player, all_ball_player_pos)
+            done = False
+            reward_from_current_episode = 0
+            steps_to_complete_episode = 0
+
+            for step in range(max_steps):
+                # Print the populated field, depending on view setting
+                if view == 'full':
+                    render_state(EMPTY_FIELD.copy(), ball, player)
+                
+                # Explore-Exploit Trade-off
+                epsilon = np.random.uniform(0,1)   # Exploit-Threshold
+                if ((exploration_rate < epsilon)
+                                or np.sum(q_table[state, :]) ) == 0:
+                    # If we do not pass the threshold needed to exploit,
+                    # or if we do not have an entry for this state,
+                    # we will explore the environment.                    
+                    action = np.random.randint(0,len(actions)-1)
+                else:
+                    # Otherwise, we passed the threshold and will
+                    # take the greedy approach.
+                    action = np.argmax(q_table[state, :])
+
+                # Render the action and pause for viewer
+                print_agent_action(action)
+                #if view == 'full':
+                #    time.sleep(.3)
+
+                # Take New Action
+                new_state, reward, done = game_step(ball, player, action, all_ball_player_pos) 
+                
+                # Update State-Action pair in Q-Table
+                q_table[state, action] = update_q_table(q_table[state, action],
+                                            q_table[new_state, :], reward,
+                                            learning_rate, discount_rate)
+
+                # Set New State
+                state = new_state
+
+                # Handle Rewards for Step
+                reward_from_current_episode += reward
+
+                # Check to see if the action ended the episode
+                if done == True:
+                    steps_to_complete_episode += step    # Step-Related Tracking
+                    break
+            
+            # Decay the Exploration Rate (exponential decay)
+            exploration_rate = min_exploration_rate + \
+                        (max_exploration_rate - min_exploration_rate) * \
+                        np.exp(-exploration_decay_rate * episode)
+
+            # Add current episode reward to the accumulator
+            all_episode_rewards[episode] = reward_from_current_episode
+
+            # Print Useful Episode Info
+            print_episode_recap(episode, steps_to_complete_episode, 
+                                reward_from_current_episode)
+            #time.sleep(3)
+        
+        # Calculate and print useful reward info
+        rewards_per_thousand_episodes = np.split(all_episode_rewards,
+                                            num_episodes / 1000)
+        count = 1000
+
+        print("**** Average reward per 1000 episodes ****\n")
+        for r in rewards_per_thousand_episodes:
+            print(count, ": ", str(sum(r/1000)))
+            count += 1000
+
 
 if __name__ == '__main__':
     print('Welcome to RLAH')
@@ -350,12 +564,21 @@ if __name__ == '__main__':
     change player and ball locations in memory
     """
     ball, player = setup()    # Set up the game and determine if agent or human
+    play_game = player.is_human     # We are human and want to play!
 
     # If the player is an agent, initialize the q-table
+    # ** Can be built into class functionality later,
+    #    and initialized with init_episode_params() **
     if player.is_agent == True:
-        q_table = make_q_table(field_width, field_height, actions)
+        q_table, all_ball_player_pos = make_q_table(field_width, field_height, actions)
+
+        num_episodes = 3000              # Number of Games to play
+        max_steps = 100                 # Max attempts to solve
+        
+        game_with_q_learning(ball, player, q_table,
+                            all_ball_player_pos, num_episodes, max_steps)
+
     
-    play_game = True          # We want to play!
     while play_game:
         render_state(EMPTY_FIELD.copy(), ball, player)
         
