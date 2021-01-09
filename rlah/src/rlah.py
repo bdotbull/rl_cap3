@@ -522,92 +522,115 @@ def update_q_table(q, new_q, reward, learning_rate, discount_rate):
             learning_rate * (reward + discount_rate * np.max(new_q))
 
 def game_with_q_learning(ball, player, q_table, all_ball_player_pos,
-            num_episodes=500, max_steps=100, view='full'):
+                         num_episodes=500, max_steps=100, view='full'):
+    """Contains all the logic to have an agent play RLAH, a 2D, text-based
+        game where the idea is to move a player to kick a ball into the net.
+        The agent uses a Q-Table and Q-Learning to maximize its reward for a
+        given state-action pair using the Bellman Optimality Equation.
 
-        # Keep track of rewards earned
-        all_episode_rewards = np.zeros(num_episodes)
+    Args:
+        ball (Ball): The ball object in play, commonly represented by '@'.
+        player (Player): The player object in play, commonly represented by 'P'.
+        q_table (list): Stores Q-Values for each state-action pair.
+        all_ball_player_pos (list): All possible combinations of ball and
+                                    player position. Used to get an index for
+                                    the Q-Table.
+        num_episodes (int, optional): Number of games to play. Defaults to 500.
+        max_steps (int, optional): Maximum number of actions the agent may
+                                   take in a given episode before the episode
+                                   is terminated. Defaults to 100.
+        view (str, optional): Determines how much information is printed when
+                              the agent plays the game. This feature is not
+                              fully implemented, but currently allows the user
+                              to view a full printout of the field, player, and
+                              ball. Also allows time to read stats at the end
+                              of each episode. Defaults to 'full'.
+    """
 
-        learning_rate = 0.1             # alpha
-        discount_rate = 0.99            # gamma
+    # Keep track of rewards earned
+    all_episode_rewards = np.zeros(num_episodes)
 
-        exploration_rate = 1
-        max_exploration_rate = 1
-        min_exploration_rate = 0.01
-        exploration_decay_rate = 0.001
+    learning_rate = 0.1             # alpha
+    discount_rate = 0.99            # gamma
 
-        # Play with Q-Learning
-        for episode in range(num_episodes):
-            # init_episode_params()
-            reset_positions(ball, player)
-            state = get_state(ball, player, all_ball_player_pos)
-            done = False
-            reward_from_current_episode = 0
-            steps_to_complete_episode = 0
+    exploration_rate = 1
+    max_exploration_rate = 1
+    min_exploration_rate = 0.01
+    exploration_decay_rate = 0.001
 
-            for step in range(max_steps):
-                # Print the populated field, depending on view setting
-                if view == 'full':
-                    render_state(EMPTY_FIELD.copy(), ball, player)
-                
-                # Explore-Exploit Trade-off
-                epsilon = np.random.uniform(0,1)   # Exploit-Threshold
-                if ((exploration_rate < epsilon)
-                                or np.sum(q_table[state, :]) ) == 0:
-                    # If we do not pass the threshold needed to exploit,
-                    # or if we do not have an entry for this state,
-                    # we will explore the environment.                    
-                    action = np.random.randint(0,len(actions)-1)
-                else:
-                    # Otherwise, we passed the threshold and will
-                    # take the greedy approach.
-                    action = np.argmax(q_table[state, :])
+    # Play with Q-Learning
+    for episode in range(num_episodes):
+        # init_episode_params()
+        reset_positions(ball, player)
+        state = get_state(ball, player, all_ball_player_pos)
+        done = False
+        reward_from_current_episode = 0
+        steps_to_complete_episode = 0
 
-                # Render the action and pause for viewer
-                print_agent_action(action)
-                if view == 'full':
-                    time.sleep(.3)
-
-                # Take New Action
-                new_state, reward, done = game_step(ball, player, action, all_ball_player_pos) 
-                
-                # Update State-Action pair in Q-Table
-                q_table[state, action] = update_q_table(q_table[state, action],
-                                            q_table[new_state, :], reward,
-                                            learning_rate, discount_rate)
-
-                # Set New State
-                state = new_state
-
-                # Handle Rewards for Step
-                reward_from_current_episode += reward
-
-                # Check to see if the action ended the episode
-                if done == True:
-                    steps_to_complete_episode += step    # Step-Related Tracking
-                    break
+        for step in range(max_steps):
+            # Print the populated field, depending on view setting
+            if view == 'full':
+                render_state(EMPTY_FIELD.copy(), ball, player)
             
-            # Decay the Exploration Rate (exponential decay)
-            exploration_rate = min_exploration_rate + \
-                        (max_exploration_rate - min_exploration_rate) * \
-                        np.exp(-exploration_decay_rate * episode)
+            # Explore-Exploit Trade-off
+            epsilon = np.random.uniform(0,1)   # Exploit-Threshold
+            if ((exploration_rate < epsilon)
+                            or np.sum(q_table[state, :]) ) == 0:
+                # If we do not pass the threshold needed to exploit,
+                # or if we do not have an entry for this state,
+                # we will explore the environment.                    
+                action = np.random.randint(0,len(actions)-1)
+            else:
+                # Otherwise, we passed the threshold and will
+                # take the greedy approach.
+                action = np.argmax(q_table[state, :])
 
-            # Add current episode reward to the accumulator
-            all_episode_rewards[episode] = reward_from_current_episode
+            # Render the action and pause for viewer
+            print_agent_action(action)
+            if view == 'full':
+                time.sleep(.3)
 
-            # Print Useful Episode Info
-            print_episode_recap(episode, steps_to_complete_episode, 
-                                reward_from_current_episode)
-            time.sleep(3)   # Give the user time to read the episode recap
+            # Take New Action
+            new_state, reward, done = game_step(ball, player, action, all_ball_player_pos) 
+            
+            # Update State-Action pair in Q-Table
+            q_table[state, action] = update_q_table(q_table[state, action],
+                                        q_table[new_state, :], reward,
+                                        learning_rate, discount_rate)
+
+            # Set New State
+            state = new_state
+
+            # Handle Rewards for Step
+            reward_from_current_episode += reward
+
+            # Check to see if the action ended the episode
+            if done == True:
+                steps_to_complete_episode += step    # Step-Related Tracking
+                break
         
-        # Calculate and print useful reward info
-        rewards_per_thousand_episodes = np.split(all_episode_rewards,
-                                            num_episodes / 1000)
-        count = 1000
+        # Decay the Exploration Rate (exponential decay)
+        exploration_rate = min_exploration_rate + \
+                    (max_exploration_rate - min_exploration_rate) * \
+                    np.exp(-exploration_decay_rate * episode)
 
-        print("**** Average reward per 1000 episodes ****\n")
-        for r in rewards_per_thousand_episodes:
-            print(count, ": ", str(sum(r/1000)))
-            count += 1000
+        # Add current episode reward to the accumulator
+        all_episode_rewards[episode] = reward_from_current_episode
+
+        # Print Useful Episode Info
+        print_episode_recap(episode, steps_to_complete_episode, 
+                            reward_from_current_episode)
+        time.sleep(3)   # Give the user time to read the episode recap
+    
+    # Calculate and print useful reward info
+    rewards_per_thousand_episodes = np.split(all_episode_rewards,
+                                        num_episodes / 1000)
+    count = 1000
+
+    print("**** Average reward per 1000 episodes ****\n")
+    for r in rewards_per_thousand_episodes:
+        print(count, ": ", str(sum(r/1000)))
+        count += 1000
 
 
 if __name__ == '__main__':
