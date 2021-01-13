@@ -2,8 +2,34 @@
 #
 ### This repository holds my resources, work, and exploration related to the use of reinforcement learning as a system to play Rocket League.
 #
+## Background & Motivation:  
+From the time I could walk and kick a ball, I was on a junior-league soccer team. Having spent much of my childhood on a farm, I was comfortable operating machinery, equipment, and vehicles at a young age. My love of motorsports and soccer, undoubtedly, stems from my upbringing, fueled my involvement in Autocross racing at BMWCCA events, drifting, and branching out into other competitive sports, particularly BJJ and Judo.
 
+Fast forward to the present time, my list of hobbies and passions has grown to include Machine Learning and Video Games. This repo is where the intersection of those two topics started for me, the home of my third Capstone project for the 2020-2021 Galvanize Data Science Immersive.
+#
+## What's the BIG idea?
+Rocket League has been a supreme form of stress relief for me. On a larger scale, alongside regular exercise, light-moderate gaming has proven to provide excellent cognitive and social benefits. Personally, I learn most effectively through visual and kinestic means. In other words, by watching and doing, I am able to acquire new understanding, skills, behaviors, and values. One of my dreams is to create a bot in Rocket League that will play the game just a little bit better than everyone else in the lobby. My aim is not to have a bot that plays vastly superior to human reaction and planning. Instead, I envision a case where a player sees the bot drive up the wall, jump off, and perform a technical aerial. Then, because that player saw it happen, and thus knows it is possible, the player will extend beyond their comfort zone and attempt the very same move.
+#
+## Why Rocket League?
+### Looking at it from the perspective of a player:
+##### _(Part of the following is an excerpt from my [Capstone 1 proposal](https://github.com/bdotbull/rl-stats-eda/blob/main/proposal/proposal.md))_  
+Quite simply, I love the game. Rocket League's major appeal to me, as a player, is its core pillar of being easy to pick up while maintaining itself as a bona fide eSport with an incredible skill ceiling. Hastily writing the game off as merely "soccer but with cars having rocket engines on the back" does a disservice to the beautiful complexity that emerges in higher brackets of play. A single match is 5 minutes, the average professional player likely has over 5000 hours of play, and new mechanics are being discovered to this day.  
+### Looking at it as an environment for AI:  
+##### _(The following is an excerpt from my [Capstone 3 propsal](https://github.com/bdotbull/rl_cap3/blob/main/proposals/P1_RL%2BML.md))_  
+Using reinforcement learning to make a bot is "the holy grail for many ML enthusiasts in the RLBot community"[*](https://github.com/RLBot/RLBot/wiki/Machine-Learning-FAQ). Due to the multifaceted nature of teaching an AI how to _understand_ the game of RL, I will focus on a single piece of the puzzle:  
+**Where should I <sub><sup>_(the bot)_</sub></sup> be in order to be part of an effective play?**
 
+Examples of an effectively play include:
+- Making a good touch on the ball by way of...
+    - passing toward a teammate
+    - clearing to an open area of the field
+- Being in a favorable position by way of...
+    - sitting in net to block a shot
+    - moving to get boost pads
+    - rotating out, away from the play *
+
+##### * The concept of "rotating play" is fundamental to success in Rocket League.  The nuance and complexity involved in determining when to leave the play, where to go next, and how fast to get there are all integral to Rocket League's astronomic skill ceiling and competitive play
+#
 
 
 #
