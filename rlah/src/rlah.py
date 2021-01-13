@@ -507,6 +507,7 @@ def game_with_q_learning(ball, player, q_table, all_ball_player_pos,
 
                 # Render the action and pause for viewer
                 print_agent_action(action)
+                
                 #if view == 'full':
                 #    time.sleep(.3)
 
@@ -544,14 +545,15 @@ def game_with_q_learning(ball, player, q_table, all_ball_player_pos,
         
         # Calculate and print useful reward info
         rewards_per_thousand_episodes = np.split(all_episode_rewards,
-                                            num_episodes / 1000)
-        count = 1000
+                                            num_episodes / 50)
+        count = 50
 
-        print("**** Average reward per 1000 episodes ****\n")
+        print("\n"*7)
+        print("**** Average reward per 50 episodes ****")
         for r in rewards_per_thousand_episodes:
-            print(count, ": ", str(sum(r/1000)))
-            count += 1000
-
+            print(f'{count} : {sum(r/50):4.3f}')
+            count += 50
+        print("\n"*10)
 
 if __name__ == '__main__':
     print('Welcome to RLAH')
@@ -572,7 +574,7 @@ if __name__ == '__main__':
     if player.is_agent == True:
         q_table, all_ball_player_pos = make_q_table(field_width, field_height, actions)
 
-        num_episodes = 3000              # Number of Games to play
+        num_episodes = 500              # Number of Games to play
         max_steps = 100                 # Max attempts to solve
         
         game_with_q_learning(ball, player, q_table,
