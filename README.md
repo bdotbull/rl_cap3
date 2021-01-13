@@ -30,8 +30,18 @@ Examples of an effectively play include:
 
 ##### * The concept of "rotating play" is fundamental to success in Rocket League.  The nuance and complexity involved in determining when to leave the play, where to go next, and how fast to get there are all integral to Rocket League's astronomic skill ceiling and competitive play
 #
+#
+## Repo Directory Info
+[Bullish](https://github.com/bdotbull/rl_cap3/tree/main/Bullish) contains everything related to my first RLBot, built using GoslingUtils. It is an "always towards ball agent" which, as the name implies, chases the ball endlessly. I used this bot as a tool to learn about the engine powering Rocket League, the available information in the game's GameTickPacket, and how everything comes together to create an autonomous agent in the game.
 
+[rlah](https://github.com/bdotbull/rl_cap3/tree/main/rlah) contains everything related to when I went "back to basics" on the subject of reinforcement learning. This is where I created a simple soccer game which serves as an environment in which a Q-Learning agent can learn and be rewarded. The game may also be played by a human.
 
 #
-### Please see [Proposals](https://github.com/bdotbull/rl_cap3/tree/main/proposals)
-1. [RL+ML](https://github.com/bdotbull/rl_cap3/blob/main/proposals/P1_RL%2BML.md)
+#
+### Info on my Capstone projects:
+- [Capstone 1]() -
+statistical analysis on over 5,000 Rocket League games to determine if a particular mechanic affects game balance.
+- [Capstone 2]() -
+a simple CNN image classifier. The network looks at a screenshot of Rocket League and outputs the name of the car the player is using. Trained on the three most popular vehicle bodies used in the game.
+- [Capstone 3]() -
+RLBot/Q-Learning environment. Project started with building an autonomous agent to play Rocket League. I wanted to learn more about reinforcement learning, so I built a simplified soccer game along the way.
